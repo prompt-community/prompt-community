@@ -1,6 +1,7 @@
 // src/app/page.tsx
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import Navbar from '@/components/Navbar'
 
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
 export const dynamic = 'force-dynamic'
@@ -22,21 +23,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
       {/* 极简顶栏 */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-            🚀 极客 Prompt 社区
-          </h1>
-          <div className="space-x-4">
-            <Link href="/login" className="text-gray-600 hover:text-blue-600 font-medium text-sm transition">
-              登录 / 注册
-            </Link>
-            <Link href="/publish" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition font-medium text-sm shadow-sm">
-              + 发布 Prompt
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* 社区大厅内容区 */}
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -64,7 +51,7 @@ export default async function Home() {
               const initial = authorName.charAt(0).toUpperCase()
 
               return (
-                <div key={prompt.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition-shadow duration-300 flex flex-col group cursor-pointer">
+                <Link href={`/prompt/${prompt.id}`} key={prompt.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition-shadow duration-300 flex flex-col group cursor-pointer">
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
                       {prompt.title}
@@ -94,7 +81,7 @@ export default async function Home() {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>
