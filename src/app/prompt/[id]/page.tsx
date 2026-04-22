@@ -35,6 +35,8 @@ export default function PromptDetailPage() {
   // 交互状态
   const [isEditing, setIsEditing] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [isCompareMode, setIsCompareMode] = useState(false) 
+  const [targetIndex, setTargetIndex] = useState(1) // 对比目标版本
   const [copied, setCopied] = useState(false)
 
   // 编辑表单状态
@@ -191,34 +193,56 @@ export default function PromptDetailPage() {
               </div>
             </div>
 
+            {/* ... 上方的标题等保持不变 ... */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-900 px-6 py-4 flex items-center justify-between">
-                <h2 className="text-white font-medium">⏱️ 版本历史</h2>
-                <div className="flex gap-3">
+              <div className="bg-gray-900 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-white font-medium">⏱️ 版本记录</h2>
+                  <button 
+                    onClick={() => setIsCompareMode(!isCompareMode)}
+                    className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                  >
+                    {isCompareMode ? '关闭对比' : '开启版本比对'}
+                  </button>
+                </div>
+                
+                <div className="flex gap-3 items-center">
+                  {isCompareMode ? (
+                    <>
+                      <span className="text-gray-400 text-sm">对比:</span>
+                      <select value={targetIndex} onChange={e => setTargetIndex(Number(e.target.value))} className="bg-gray-800 text-red-400 p-1.5 rounded text-sm font-mono">
+                        {versions.map((v, i) => <option key={v.id} value={i}>v{versions.length - i}</option>)}
+                      </select>
+                      <span className="text-gray-400 text-sm">与</span>
+                    </>
+                  ) : null}
+
                   <select 
                     value={selectedIndex}
                     onChange={e => setSelectedIndex(Number(e.target.value))}
-                    className="bg-gray-800 text-green-400 p-2 rounded text-sm font-mono"
+                    className="bg-gray-800 text-green-400 p-1.5 rounded text-sm font-mono"
                   >
                     {versions.map((v, i) => (
                       <option key={v.id} value={i}>v{versions.length - i} {i === 0 ? '(最新)' : ''}</option>
                     ))}
                   </select>
-                  <button onClick={handleCopy} className="bg-gray-700 text-white px-4 py-2 rounded text-sm font-medium">
+                  <button onClick={handleCopy} className="bg-gray-700 text-white px-4 py-1.5 rounded text-sm font-medium">
                     {copied ? '✅' : '📋 复制'}
                   </button>
                 </div>
               </div>
               
               <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-75 text-gray-800">
-                {diffResult ? (
-                  diffResult.map((part, i) => (
+                {isCompareMode ? (
+                  // Diff 模式渲染
+                  Diff.diffWords(versions[targetIndex]?.content || '', versions[selectedIndex]?.content || '').map((part, i) => (
                     <span key={i} className={part.added ? 'bg-green-100 text-green-800 font-bold' : part.removed ? 'bg-red-100 text-red-800 line-through' : ''}>
                       {part.value}
                     </span>
                   ))
                 ) : (
-                  <span>{currentVersion?.content}</span>
+                  // 纯净模式渲染
+                  <span>{versions[selectedIndex]?.content}</span>
                 )}
               </div>
             </div>
