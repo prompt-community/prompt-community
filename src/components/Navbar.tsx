@@ -12,8 +12,8 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo 区 */}
         <Link href="/" className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          🚀 <span className="hidden sm:inline">水分子 Prompt 社区</span>
-          <span className="sm:hidden">Prompt 社区</span> {/* 移动端精简名称 */}
+          💧 <span className="hidden sm:inline">欢迎来到 Prompt 饮水机 💧</span>
+          <span className="sm:hidden">Prompt 饮水机</span> {/* 移动端精简名称 */}
         </Link>
 
         {/* 桌面端导航 (中大屏显示，小屏隐藏) */}

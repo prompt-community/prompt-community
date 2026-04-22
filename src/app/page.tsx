@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
+// import Navbar from '@/components/Navbar'
 
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
 export const dynamic = 'force-dynamic'
@@ -22,14 +22,12 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
-      {/* 极简顶栏 */}
-      <Navbar />
 
       {/* 社区大厅内容区 */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-extrabold text-gray-800 mb-3">发现灵感，加速开发</h2>
-          <p className="text-gray-500">探索由中科大同学们分享的优质 Prompt，支持一键复制与秒级回退。</p>
+          <h2 className="text-3xl font-extrabold text-gray-800 mb-3">停下脚步，接一杯灵感</h2>
+          <p className="text-gray-500">探索由中科大同学们分享的优质 Prompt。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
         </div>
 
         {/* 错误拦截提示 */}
