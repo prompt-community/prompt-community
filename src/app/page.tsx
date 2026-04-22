@@ -46,8 +46,8 @@ export default async function Home() {
             {prompts.map((prompt) => {
               // 提取嵌套的 profile 数据
               const profile = prompt.profiles as { username: string; avatar_url: string } | null
-              // 如果有用户名就用用户名，否则显示“匿名极客”，并且取名字的首字母作为头像占位符
-              const authorName = profile?.username || '匿名极客'
+              // 如果有用户名就用用户名，否则显示“匿名水分子”，并且取名字的首字母作为头像占位符
+              const authorName = profile?.username || '匿名水分子'
               const initial = authorName.charAt(0).toUpperCase()
 
               return (
@@ -62,7 +62,7 @@ export default async function Home() {
                   </div>
                   
                   <p className="text-gray-600 text-sm mb-5 flex-grow line-clamp-3 leading-relaxed">
-                    {prompt.description || "这位极客很懒，没有写任何描述..."}
+                    {prompt.description || "这位水分子很懒，没有写任何描述..."}
                   </p>
                   
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
@@ -86,7 +86,7 @@ export default async function Home() {
             })}
           </div>
         ) : (
-          /* 极客风的空状态 (Empty State) */
+          /* 水分子风的空状态 (Empty State) */
           <div className="text-center py-24 bg-white border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center">
             <span className="text-4xl mb-4">📭</span>
             <p className="text-gray-500 mb-6 text-lg font-medium">大厅空空如也，亟待硬核内容注入！</p>

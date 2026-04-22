@@ -44,7 +44,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4 font-sans">
       <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">极客身份验证</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">水世界通行证</h1>
         
         <form className="space-y-4">
           <div>
@@ -61,7 +61,7 @@ export default function LoginPage() {
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">极客密码</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">水分子密码</label>
             <input 
               type="password" 
               value={password}

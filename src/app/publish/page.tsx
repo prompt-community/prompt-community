@@ -61,7 +61,7 @@ export default function PublishPage() {
         }])
 
       if (versionError) {
-        // 极客容错：如果版本表插入失败，尝试回滚（删除主表）
+        // 水分子容错：如果版本表插入失败，尝试回滚（删除主表）
         await supabase.from('prompts').delete().eq('id', promptData.id)
         throw versionError
       }
@@ -84,7 +84,7 @@ export default function PublishPage() {
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
       <div className="max-w-3xl mx-auto px-4">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
-          ➕ 发布你的极客 Prompt
+          ➕ 发布你的水分子 Prompt
         </h1>
 
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">

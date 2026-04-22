@@ -12,7 +12,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo 区 */}
         <Link href="/" className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          🚀 <span className="hidden sm:inline">极客 Prompt 社区</span>
+          🚀 <span className="hidden sm:inline">水分子 Prompt 社区</span>
           <span className="sm:hidden">Prompt 社区</span> {/* 移动端精简名称 */}
         </Link>
 
