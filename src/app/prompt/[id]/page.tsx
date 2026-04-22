@@ -1,13 +1,15 @@
 // src/app/prompt/[id]/page.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import * as Diff from 'diff'
 
+// 进阶类型定义
 interface PromptData {
   id: string;
+  author_id: string; // 新增，用于校验权限
   title: string;
   description: string;
   profiles?: { username: string };
@@ -17,144 +19,211 @@ interface PromptVersion {
   id: string;
   prompt_id: string;
   content: string;
-  commit_message: string | null; // 允许为 null，因为有些更新可能没写日志
+  commit_message: string | null;
   created_at: string;
 }
 
 export default function PromptDetailPage() {
-  // useParams 会自动提取 URL 里的动态 [id]
   const { id } = useParams()
+  
+  // 核心数据状态
   const [prompt, setPrompt] = useState<PromptData | null>(null)
   const [versions, setVersions] = useState<PromptVersion[]>([])
   const [loading, setLoading] = useState(true)
-
-  // 选中的版本索引，默认 0 为最新版
+  const [isAuthor, setIsAuthor] = useState(false)
+  
+  // 交互状态
+  const [isEditing, setIsEditing] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [copied, setCopied] = useState(false)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // 1. 获取主表信息与作者名
-      const { data: pData } = await supabase
-        .from('prompts')
-        .select('*, profiles(username)')
-        .eq('id', id)
-        .single()
+  // 编辑表单状态
+  const [editTitle, setEditTitle] = useState('')
+  const [editDesc, setEditDesc] = useState('')
+  const [editContent, setEditContent] = useState('')
+  const [commitMsg, setCommitMsg] = useState('')
+  const [saving, setSaving] = useState(false)
 
-      // 2. 获取该 Prompt 的所有历史版本（按时间倒序：最新在最前）
-      const { data: vData } = await supabase
-        .from('prompt_versions')
-        .select('*')
-        .eq('prompt_id', id)
-        .order('created_at', { ascending: false })
+  const fetchData = useCallback(async () => {
+    // 获取主表和作者
+    const { data: pData } = await supabase
+      .from('prompts')
+      .select('*, profiles(username)')
+      .eq('id', id)
+      .single()
 
+    // 获取版本历史
+    const { data: vData } = await supabase
+      .from('prompt_versions')
+      .select('*')
+      .eq('prompt_id', id)
+      .order('created_at', { ascending: false })
+
+    // 获取当前用户并核验身份
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (pData) {
       setPrompt(pData)
-      setVersions(vData || [])
-      setLoading(false)
+      setEditTitle(pData.title)
+      setEditDesc(pData.description || '')
+      setIsAuthor(user?.id === pData.author_id)
     }
     
-    if (id) fetchData()
+    if (vData) {
+      setVersions(vData)
+      setEditContent(vData[0]?.content || '')
+    }
+    
+    setLoading(false)
   }, [id])
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    if (id) fetchData()
+  }, [id, fetchData])
+
+  // 处理一键复制
   const handleCopy = async () => {
-    if (!currentVersion?.content) return
+    const text = versions[selectedIndex]?.content
+    if (!text) return
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  // 处理提交更新 (产生新版本)
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
     try {
-      await navigator.clipboard.writeText(currentVersion.content)
-      setCopied(true)
-      // 2秒后恢复原状
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('复制失败:', err)
+      // 1. 更新主表元数据
+      const { error: pError } = await supabase
+        .from('prompts')
+        .update({ title: editTitle, description: editDesc })
+        .eq('id', id)
+
+      if (pError) throw pError
+
+      // 2. 插入新版本记录 (不覆盖旧版本)
+      const { error: vError } = await supabase
+        .from('prompt_versions')
+        .insert([{
+          prompt_id: id,
+          content: editContent,
+          commit_message: commitMsg || '无更新日志'
+        }])
+
+      if (vError) throw vError
+
+      // 3. 重置状态并刷新数据
+      setIsEditing(false)
+      setCommitMsg('')
+      await fetchData()
+      setSelectedIndex(0) // 切换到最新的版本
+      
+    } catch (error: unknown) {
+      alert(error instanceof Error ? error.message : '更新失败')
+    } finally {
+      setSaving(false)
     }
   }
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center font-sans text-gray-500">正在从数据库跃迁数据...</div>
-  if (!prompt || versions.length === 0) return <div className="min-h-screen flex items-center justify-center">未找到该 Prompt 及其版本</div>
+  if (loading) return <div className="min-h-screen flex items-center justify-center">跃迁中...</div>
+  if (!prompt) return <div>未找到内容</div>
 
-  // 核心魔法：计算版本差异 (Diff)
+  // 计算 Diff
   const currentVersion = versions[selectedIndex]
-  // 如果选中了最新版，旧版就是上一个版本（索引+1）；如果已经是最初版，则没有旧版
   const oldVersion = selectedIndex < versions.length - 1 ? versions[selectedIndex + 1] : null
-  
-  // 仅当存在旧版本时，执行 diff 对比
-  const diffResult = oldVersion 
-    ? Diff.diffWords(oldVersion.content, currentVersion.content)
-    : null
+  const diffResult = oldVersion ? Diff.diffWords(oldVersion.content, currentVersion.content) : null
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
       <div className="max-w-4xl mx-auto px-4">
         
-        {/* 头部信息 */}
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6 group">
-          <div className="flex justify-between items-start mb-4">
-            <h1 className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition">
-              {prompt.title}
-            </h1>
-            <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-medium">
-              作者: {prompt.profiles?.username || '匿名'}
-            </span>
-          </div>
-          <p className="text-gray-600">{prompt.description}</p>
-        </div>
+        {/* 编辑模式表单 */}
+        {isEditing ? (
+          <form onSubmit={handleUpdate} className="bg-white p-8 rounded-xl shadow-lg border-2 border-blue-500 space-y-6 text-gray-800">
+            <h2 className="text-xl font-bold text-gray-800">🛠️ 编辑 Prompt (产生新版本)</h2>
+            <input 
+              value={editTitle}
+              onChange={e => setEditTitle(e.target.value)}
+              className="w-full p-3 border rounded-lg text-lg font-bold"
+              placeholder="修改标题..."
+            />
+            <textarea 
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              className="w-full p-3 border rounded-lg font-mono text-sm"
+              rows={10}
+              placeholder="修改指令内容..."
+            />
+            <input 
+              value={commitMsg}
+              onChange={e => setCommitMsg(e.target.value)}
+              className="w-full p-3 border rounded-lg text-sm"
+              placeholder="更新日志 (例如：优化了逻辑)"
+            />
+            <div className="flex gap-4">
+              <button disabled={saving} type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">
+                {saving ? '保存中...' : '发布新版本 V' + (versions.length + 1)}
+              </button>
+              <button type="button" onClick={() => setIsEditing(false)} className="px-6 py-3 text-gray-500 font-medium">取消</button>
+            </div>
+          </form>
+        ) : (
+          /* 阅读模式界面 */
+          <>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
+                  <p className="text-gray-500">作者: {prompt.profiles?.username}</p>
+                </div>
+                {/* 身份核验：仅作者可见编辑按钮 */}
+                {isAuthor && (
+                  <button 
+                    onClick={() => setIsEditing(true)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium transition"
+                  >
+                    ✏️ 编辑
+                  </button>
+                )}
+              </div>
+            </div>
 
-        {/* 版本控制与时光机 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-gray-900 px-6 py-4 flex items-center justify-between">
-            <h2 className="text-white font-medium flex items-center gap-2">
-              <span>⏱️</span> 版本时光机 (Diff Viewer)
-            </h2>
-            {/* 新增的外层容器，让下拉框和复制按钮并排 */}
-            <div className="flex items-center gap-3"></div>
-            <select 
-              value={selectedIndex}
-              onChange={(e) => setSelectedIndex(Number(e.target.value))}
-              className="bg-gray-800 text-green-400 border border-gray-700 p-2 rounded-md outline-none text-sm font-mono cursor-pointer"
-            >
-              {versions.map((v, i) => (
-                <option key={v.id} value={i}>
-                  {i === 0 ? '最新版' : `版本 v${versions.length - i}`} - {new Date(v.created_at).toLocaleDateString()}
-                </option>
-              ))}
-            </select>
-            {/* 核心：一键复制按钮 */}
-            <button
-              onClick={handleCopy}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition shadow-sm"
-              >
-              {copied ? '✅ 已复制' : '📋 一键复制'}
-            </button>
-
-          </div>
-
-          <div className="p-6 bg-gray-50 border-b border-gray-200">
-            <p className="text-sm text-gray-500 font-mono">
-              <strong>更新日志：</strong> {currentVersion.commit_message || '无'}
-            </p>
-          </div>
-
-          {/* Prompt 文本展示区 */}
-          <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-800 overflow-x-auto">
-            {diffResult ? (
-              // 渲染 Diff 高亮
-              diffResult.map((part, index) => {
-                const colorClass = part.added 
-                  ? 'bg-green-100 text-green-800 font-bold px-1 rounded' 
-                  : part.removed 
-                    ? 'bg-red-100 text-red-800 line-through px-1 rounded opacity-70' 
-                    : 'text-gray-700'
-                return (
-                  <span key={index} className={colorClass}>
-                    {part.value}
-                  </span>
-                )
-              })
-            ) : (
-              // 渲染纯文本（最初版没有可对比的旧版本）
-              <span>{currentVersion.content}</span>
-            )}
-          </div>
-        </div>
-
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-gray-900 px-6 py-4 flex items-center justify-between">
+                <h2 className="text-white font-medium">⏱️ 版本历史</h2>
+                <div className="flex gap-3">
+                  <select 
+                    value={selectedIndex}
+                    onChange={e => setSelectedIndex(Number(e.target.value))}
+                    className="bg-gray-800 text-green-400 p-2 rounded text-sm font-mono"
+                  >
+                    {versions.map((v, i) => (
+                      <option key={v.id} value={i}>v{versions.length - i} {i === 0 ? '(最新)' : ''}</option>
+                    ))}
+                  </select>
+                  <button onClick={handleCopy} className="bg-gray-700 text-white px-4 py-2 rounded text-sm font-medium">
+                    {copied ? '✅' : '📋 复制'}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-75 text-gray-800">
+                {diffResult ? (
+                  diffResult.map((part, i) => (
+                    <span key={i} className={part.added ? 'bg-green-100 text-green-800 font-bold' : part.removed ? 'bg-red-100 text-red-800 line-through' : ''}>
+                      {part.value}
+                    </span>
+                  ))
+                ) : (
+                  <span>{currentVersion?.content}</span>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </main>
   )
