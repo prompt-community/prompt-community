@@ -13,9 +13,9 @@ export default function Navbar() {
   const [loading, setLoading] = useState(true)
 
   // 定义独立域名的认证地址，方便后续统一修改
-  // const AUTH_URL = "https://auth.wsw.wiki/login?redirect_to=https://main.wsw.wiki"
+  const AUTH_URL = "https://auth.wsw.wiki/login?redirect_to=https://main.wsw.wiki"
 
-  const AUTH_URL = "/login"
+  // const AUTH_URL = "/login"
 
   useEffect(() => {
     // 1. 组件挂载时获取当前用户
