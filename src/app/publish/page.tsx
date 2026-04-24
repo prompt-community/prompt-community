@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { authService } from '@/lib/authService'
 
 export default function PublishPage() {
   const router = useRouter()
@@ -17,10 +18,10 @@ export default function PublishPage() {
   // 页面加载时验证身份
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await authService.getCurrentUser()      
       if (!user) {
         // 如果没登录，直接踢回登录页
-        router.push('/login')
+        window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki/publish"
       } else {
         setUserId(user.id)
       }
@@ -28,7 +29,7 @@ export default function PublishPage() {
     checkAuth()
   }, [router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!userId) return
 
@@ -81,7 +82,7 @@ export default function PublishPage() {
   if (!userId) return <div className="min-h-screen flex items-center justify-center">身份核验中...</div>
 
   return (
-    <main className="min-h-screen bg-gray-50 py-12 font-sans">
+    <main className="min-h-screen text-gray-800 bg-gray-50 py-12 font-sans">
       <div className="max-w-3xl mx-auto px-4">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
           ➕ 发布你的水分子 Prompt

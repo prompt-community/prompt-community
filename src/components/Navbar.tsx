@@ -21,13 +21,19 @@ export default function Navbar() {
     // 1. 组件挂载时获取当前用户
     const fetchUser = async () => {
       const currentUser = await authService.getCurrentUser()
+      console.log("当前用户信息：", currentUser) // 🔥 调试输出，验证用户对象结构
       setUser(currentUser)
+      console.log(user)
       setLoading(false)
     }
     fetchUser()
 
     // 2. 监听登录状态变化 (处理登录、登出、Token 过期等情况)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (process.env.NODE_ENV === 'development') {
+        return
+        // setUser(currentUser)
+      }
       setUser(session?.user || null)
     })
 
@@ -40,7 +46,7 @@ export default function Navbar() {
   }
 
   // 提取显示名称：优先显示邮箱前缀
-  const displayName = user?.email?.split('@')[0] || '极客'
+  const displayName = user?.email?.split('@')[0] || '水分子'
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 font-sans">

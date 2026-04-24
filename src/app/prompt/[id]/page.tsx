@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import * as Diff from 'diff'
+import { authService } from '@/lib/authService'
 
 // 进阶类型定义
 interface PromptData {
@@ -62,7 +63,7 @@ export default function PromptDetailPage() {
       .order('created_at', { ascending: false })
 
     // 获取当前用户并核验身份
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await authService.getCurrentUser()
     
     if (pData) {
       setPrompt(pData)
