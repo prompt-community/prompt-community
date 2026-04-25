@@ -3,9 +3,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase'
 import * as Diff from 'diff'
 import { authService } from '@/lib/authService'
+import { toast } from 'react-hot-toast';
 
 // 进阶类型定义
 interface PromptData {
@@ -26,6 +28,7 @@ interface PromptVersion {
 
 export default function PromptDetailPage() {
   const { id } = useParams()
+  const router = useRouter();
   
   // 核心数据状态
   const [prompt, setPrompt] = useState<PromptData | null>(null)
@@ -131,13 +134,40 @@ export default function PromptDetailPage() {
     }
   }
 
+  const handleDelete = async () => {
+    // 防误触二次确认
+    const confirmed = window.confirm("确定要让这个 Prompt 消失在水世界中吗？此操作不可逆！");
+    if (!confirmed) return;
+
+    // 确保 prompt 数据已经加载出来了
+    if (!prompt) return; 
+
+    try {
+      const { error } = await supabase
+        .from('prompts')
+        .delete()
+        .eq('id', prompt.id); 
+
+      if (error) throw error;
+
+      toast.success("删除成功，正在返回广场...");
+      // 删除成功后跳转回首页
+      router.push('/'); 
+      
+    } catch (error: unknown) {
+      toast.error("删除失败: " + (error as Error).message);
+      console.error("删除报错:", error);
+    }
+  };
+
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">跃迁中...</div>
   if (!prompt) return <div>未找到内容</div>
 
   // 计算 Diff
-  const currentVersion = versions[selectedIndex]
-  const oldVersion = selectedIndex < versions.length - 1 ? versions[selectedIndex + 1] : null
-  const diffResult = oldVersion ? Diff.diffWords(oldVersion.content, currentVersion.content) : null
+  // const currentVersion = versions[selectedIndex]
+  // const oldVersion = selectedIndex < versions.length - 1 ? versions[selectedIndex + 1] : null
+  // const diffResult = oldVersion ? Diff.diffWords(oldVersion.content, currentVersion.content) : null
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
@@ -247,6 +277,29 @@ export default function PromptDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* 👇 新增：危险操作区域 👇 */}
+            {isAuthor && (
+              <div className="mt-12 pt-8 border-t border-red-200">
+                <h3 className="text-red-500 font-bold mb-4 flex items-center gap-2">
+                  ⚠️ 危险区域
+                </h3>
+                <div className="bg-red-50/50 rounded-xl p-6 border border-red-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <h4 className="text-red-900 font-medium text-lg">删除此 Prompt</h4>
+                    <p className="text-red-600/80 text-sm mt-1">
+                      一旦删除，所有历史版本和相关数据将被彻底抹除且不可恢复。
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleDelete}
+                    className="shrink-0 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 font-medium shadow-sm"
+                  >
+                    彻底删除
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
