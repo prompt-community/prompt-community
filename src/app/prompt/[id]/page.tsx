@@ -170,6 +170,13 @@ export default function PromptDetailPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // 拦截回车键防止自动提交
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // 阻止默认的表单提交行为
+    }
+  };
+
   // 发布新版本 (保持原有逻辑)
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -202,6 +209,7 @@ export default function PromptDetailPage() {
             <input 
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
+              onKeyDown={handleKeyDown} // 👈 注入拦截函数
               className="w-full p-3 border rounded-lg text-lg font-bold"
               placeholder="修改标题..."
             />
@@ -212,7 +220,7 @@ export default function PromptDetailPage() {
               rows={10}
               placeholder="修改指令内容..."
             />
-            <input 
+            <textarea
               value={commitMsg}
               onChange={e => setCommitMsg(e.target.value)}
               className="w-full p-3 border rounded-lg text-sm"
