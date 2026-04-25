@@ -50,6 +50,9 @@ export default function PromptDetailPage() {
   const [commitMsg, setCommitMsg] = useState('')
   const [saving, setSaving] = useState(false)
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // 控制确认弹窗的显示
+  const [isDeleting, setIsDeleting] = useState(false);           // 控制删除时的 loading 状态
+
   const fetchData = useCallback(async () => {
     // 获取主表和作者
     const { data: pData } = await supabase
@@ -134,29 +137,30 @@ export default function PromptDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    // 防误触二次确认
-    const confirmed = window.confirm("确定要让这个 Prompt 消失在水世界中吗？此操作不可逆！");
-    if (!confirmed) return;
+  // 1. 点击危险区域的删除按钮时，只负责打开弹窗
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
 
-    // 确保 prompt 数据已经加载出来了
-    if (!prompt) return; 
+  // 2. 弹窗里点击“确认毁灭”时，才真正执行数据库清理
+  const executeDelete = async () => {
+    if (!prompt) return;
+    setIsDeleting(true); // 按钮变成 loading 状态
 
     try {
       const { error } = await supabase
         .from('prompts')
         .delete()
-        .eq('id', prompt.id); 
+        .eq('id', prompt.id);
 
       if (error) throw error;
 
-      toast.success("删除成功，正在返回广场...");
-      // 删除成功后跳转回首页
-      router.push('/'); 
-      
+      toast.success("Prompt 已从水世界蒸发...");
+      router.push('/');
     } catch (error: unknown) {
       toast.error("删除失败: " + (error as Error).message);
-      console.error("删除报错:", error);
+      setIsDeleting(false); // 失败了恢复按钮状态
+      setShowDeleteModal(false); // 关闭弹窗
     }
   };
 
@@ -292,7 +296,7 @@ export default function PromptDetailPage() {
                     </p>
                   </div>
                   <button
-                    onClick={handleDelete}
+                    onClick={handleDeleteClick}
                     className="shrink-0 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white hover:border-red-600 transition-all duration-200 font-medium shadow-sm"
                   >
                     彻底删除
@@ -302,6 +306,46 @@ export default function PromptDetailPage() {
             )}
           </>
         )}
+
+        {/* 👇 删库跑路二次确认精美弹窗 👇 */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-900/60 backdrop-blur-sm transition-opacity">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+              {/* 警告图标 */}
+              <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4 mx-auto text-2xl">
+                ⚠️
+              </div>
+              
+              {/* 文本区域 */}
+              <h3 className="text-xl font-bold text-center text-gray-900 mb-2">
+                确认让它消失吗？
+              </h3>
+              <p className="text-gray-500 text-center text-sm mb-6 leading-relaxed">
+                此操作不可逆。该 Prompt 的所有历史版本、点赞数据将被彻底从水世界中抹除。
+              </p>
+              
+              {/* 按钮组 */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition duration-200 disabled:opacity-50"
+                >
+                  再想想
+                </button>
+                <button
+                  onClick={executeDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition duration-200 shadow-sm disabled:opacity-70 flex justify-center items-center"
+                >
+                  {isDeleting ? '蒸发中...' : '确认毁灭'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* 👆 弹窗结束 👆 */}
+
       </div>
     </main>
   )
