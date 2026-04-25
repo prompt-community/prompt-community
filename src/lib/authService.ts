@@ -3,6 +3,8 @@ import { supabase } from './supabase'
 import {type User} from '@supabase/supabase-js'
 
 export const authService = {
+  
+
   // 1. 退出登录
   async signOut() {
     const { error } = await supabase.auth.signOut()
@@ -11,10 +13,12 @@ export const authService = {
 
   // 2. 获取当前登录用户
   async getCurrentUser() {
+    const admin_uid = process.env.NEXT_PUBLIC_ADMIN_UID! // 从环境变量读取管理员 UID
     if (process.env.NODE_ENV === 'development') {
+      console.log(admin_uid)
       // console.log("🔥 [AuthService] 触发本地上帝模式！发放伪造凭证...")
       return {
-        id: 'f025b6f0-bd6e-4d79-8a02-48e8473bc5f0',
+        id: admin_uid,
         aud: 'authenticated',
         role: 'authenticated',
         email: 'god@local.dev',
