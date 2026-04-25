@@ -14,7 +14,7 @@ export const authService = {
     if (process.env.NODE_ENV === 'development') {
       // console.log("🔥 [AuthService] 触发本地上帝模式！发放伪造凭证...")
       return {
-        id: 'test-god-mode-id-12345',
+        id: 'f025b6f0-bd6e-4d79-8a02-48e8473bc5f0',
         aud: 'authenticated',
         role: 'authenticated',
         email: 'god@local.dev',
@@ -36,12 +36,12 @@ export const authService = {
   },
 
   // 3. 获取role(string)
-  async getRole() {
+  async getRole() : Promise<string | null> {
 
-    if (process.env.NODE_ENV === 'development') {
-      // console.log("🔥 [AuthService] 触发本地上帝模式！返回管理员角色...")
-      return 'admin'
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   // console.log("🔥 [AuthService] 触发本地上帝模式！返回管理员角色...")
+    //   return 'admin'
+    // }
 
     const user = await this.getCurrentUser()
     if (!user) return null

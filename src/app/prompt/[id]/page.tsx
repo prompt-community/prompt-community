@@ -2,20 +2,20 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation' // 引入 useRouter
+import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import * as Diff from 'diff'
 import { authService } from '@/lib/authService'
-import { toast } from 'react-hot-toast' // 建议确保安装了此库
-import { User } from '@supabase/supabase-js' // 引入 User 类型定义
+import { toast } from 'react-hot-toast'
+import { User } from '@supabase/supabase-js'
+// import { constrainedMemory } from 'process'
 
-// 进阶类型定义
 interface PromptData {
   id: string;
   author_id: string;
   title: string;
-  description: string;
-  likes_count: number; // 新增点赞数字段
+  description: string; // 确保包含 description
+  likes_count: number;
   profiles?: { username: string };
 }
 
@@ -35,48 +35,48 @@ export default function PromptDetailPage() {
   const [prompt, setPrompt] = useState<PromptData | null>(null)
   const [versions, setVersions] = useState<PromptVersion[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentUser, setCurrentUser] = useState<User | null>(null) // 新增用户信息状态
-  const [isAuthor, setIsAuthor] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false) // 新增：管理员状态
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   
-  // 交互状态
+  // 权限状态
+  const [isAuthor, setIsAuthor] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  
+  // --- 新增：元数据编辑状态 (标题/简介) ---
+  const [isEditingMeta, setIsEditingMeta] = useState(false)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [savingMeta, setSavingMeta] = useState(false)
+
+  // --- 版本内容编辑状态 ---
   const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+  const [commitMsg, setCommitMsg] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // 交互状态
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isCompareMode, setIsCompareMode] = useState(false) 
   const [targetIndex, setTargetIndex] = useState(1)
   const [copied, setCopied] = useState(false)
-  const [saving, setSaving] = useState(false)
-
-  // --- 新增：点赞与删除状态 ---
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // 编辑模式临时状态
-  const [editTitle, setEditTitle] = useState('')
-  const [editContent, setEditContent] = useState('')
-  const [commitMsg, setCommitMsg] = useState('')
-
-  // 初始化加载
   useEffect(() => {
     const fetchData = async () => {
-      // 1. 获取当前用户
       const user = await authService.getCurrentUser()
-      console.log("👤 当前用户:", user)
       setCurrentUser(user)
 
-      // 新增：查验水世界通行证段位（是否为管理员）
       if (user) {
         const role = await authService.getRole()
-        console.log("👤 当前用户:", role)
         if (role === 'admin') {
           setIsAdmin(true)
         }
       }
 
-      // 2. 获取 Prompt 主表数据
+      // 获取主表数据
       const { data: promptData, error: pError } = await supabase
         .from('prompts')
         .select('*, profiles(username)')
@@ -87,14 +87,15 @@ export default function PromptDetailPage() {
       
       setPrompt(promptData)
       setLikesCount(promptData.likes_count || 0)
-      setEditTitle(promptData.title)
       
-      // 3. 判断权限
+      // 初始化编辑表单的数据
+      setEditTitle(promptData.title)
+      setEditDescription(promptData.description || '')
+      
       if (user && promptData.author_id === user.id) {
         setIsAuthor(true)
       }
 
-      // 4. 检查点赞状态
       if (user) {
         const { data: likeData } = await supabase
           .from('prompt_likes')
@@ -105,7 +106,6 @@ export default function PromptDetailPage() {
         if (likeData) setIsLiked(true)
       }
 
-      // 5. 获取版本列表
       const { data: versionData } = await supabase
         .from('prompt_versions')
         .select('*')
@@ -122,7 +122,48 @@ export default function PromptDetailPage() {
     fetchData()
   }, [id])
 
-  // --- 新增：点赞逻辑 (乐观更新) ---
+  // --- 新增：保存主表元数据 (无版本记录) ---
+  const handleMetaUpdate = async () => {
+    if (!editTitle.trim()) return toast.error("标题不能为空")
+    setSavingMeta(true)
+    try {
+      const { error } = await supabase
+        .from('prompts')
+        .update({ title: editTitle, description: editDescription })
+        .eq('id', id)
+        
+      if (error) throw error
+      
+      // 乐观更新本地状态
+      setPrompt(prev => prev ? { ...prev, title: editTitle, description: editDescription } : null)
+      setIsEditingMeta(false)
+      toast.success("基础信息修改成功！")
+    } catch (err: unknown) {
+      toast.error("修改失败: " + (err as Error).message)
+    } finally {
+      setSavingMeta(false)
+    }
+  }
+
+  // 保存新版本 (有版本记录)
+  const handleVersionUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const { error: vError } = await supabase.from('prompt_versions').insert([{
+        prompt_id: id,
+        content: editContent,
+        commit_message: commitMsg || `Updated to V${versions.length + 1}`
+      }])
+      if (vError) throw vError
+      toast.success("新版本发布成功！")
+      window.location.reload() // 刷新获取最新版本记录
+    } catch (err: unknown) {
+      toast.error("发布失败: " + (err as Error).message)
+      setSaving(false)
+    }
+  }
+
   const handleToggleLike = async () => {
     if (!currentUser) return toast.error("请先登录水世界通行证")
     if (isLikeLoading) return
@@ -139,7 +180,7 @@ export default function PromptDetailPage() {
         await supabase.from('prompt_likes').delete().eq('user_id', currentUser.id).eq('prompt_id', id)
       }
     } catch (err: unknown) {
-      // 回滚
+      console.error("点赞操作失败: ", err)
       setIsLiked(!newIsLiked)
       setLikesCount(prev => newIsLiked ? prev - 1 : prev + 1)
       toast.error("操作失败")
@@ -148,7 +189,6 @@ export default function PromptDetailPage() {
     }
   }
 
-  // --- 新增：删除逻辑 ---
   const executeDelete = async () => {
     setIsDeleting(true)
     try {
@@ -163,181 +203,208 @@ export default function PromptDetailPage() {
     }
   }
 
-  // 复制功能
   const handleCopy = () => {
     navigator.clipboard.writeText(versions[selectedIndex]?.content || '')
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // 拦截回车键防止自动提交
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // 阻止默认的表单提交行为
-    }
-  };
-
-  // 发布新版本 (保持原有逻辑)
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const { error: vError } = await supabase.from('prompt_versions').insert([{
-        prompt_id: id,
-        content: editContent,
-        commit_message: commitMsg || `Updated to V${versions.length + 1}`
-      }])
-      if (vError) throw vError
-      window.location.reload()
-    } catch (err: unknown) {
-      alert((err as Error).message)
-      setSaving(false)
-    }
-  }
-
   if (loading) return <div className="p-20 text-center font-mono">加载中...</div>
   if (!prompt) return <div className="p-20 text-center font-mono">Prompt 未找到</div>
+
+  const hasPermission = isAuthor || isAdmin
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
       <div className="max-w-4xl mx-auto px-4">
         
-        {/* 编辑模式表单 */}
-        {isEditing ? (
-          <form onSubmit={handleUpdate} className="bg-white p-8 rounded-xl shadow-lg border-2 border-blue-500 space-y-6 text-gray-800">
-            <h2 className="text-xl font-bold text-gray-800">🛠️ 编辑 Prompt (产生新版本)</h2>
+        {/* 新增：元数据编辑模式 */}
+        {isEditingMeta ? (
+          <div className="bg-white p-8 rounded-xl shadow-md border-2 border-gray-200 mb-6 space-y-4">
+            <h2 className="text-lg font-bold text-gray-800">⚙️ 修改基础信息</h2>
             <input 
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
-              onKeyDown={handleKeyDown} // 👈 注入拦截函数
-              className="w-full p-3 border rounded-lg text-lg font-bold"
-              placeholder="修改标题..."
+              onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+              className="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-blue-500"
+              placeholder="Prompt 标题"
             />
             <textarea 
-              value={editContent}
-              onChange={e => setEditContent(e.target.value)}
-              className="w-full p-3 border rounded-lg font-mono text-sm"
-              rows={10}
-              placeholder="修改指令内容..."
+              value={editDescription}
+              onChange={e => setEditDescription(e.target.value)}
+              className="w-full p-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              placeholder="添加一段牛逼的简介吧..."
             />
-            <textarea
-              value={commitMsg}
-              onChange={e => setCommitMsg(e.target.value)}
-              className="w-full p-3 border rounded-lg text-sm"
-              placeholder="更新日志 (例如：优化了逻辑)"
-            />
-            <div className="flex gap-4">
-              <button disabled={saving} type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold">
-                {saving ? '保存中...' : '发布新版本 V' + (versions.length + 1)}
+            <div className="flex gap-3 pt-2">
+              <button onClick={handleMetaUpdate} disabled={savingMeta} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">
+                {savingMeta ? '保存中...' : '确认修改'}
               </button>
-              <button type="button" onClick={() => setIsEditing(false)} className="px-6 py-3 text-gray-500 font-medium">取消</button>
+              <button onClick={() => setIsEditingMeta(false)} className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">
+                取消
+              </button>
             </div>
-          </form>
+          </div>
         ) : (
-          /* 阅读模式界面 */
-          <>
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
-                  <p className="text-gray-500 mb-4">作者: {prompt.profiles?.username}</p>
-                  
-                  {/* 点赞按钮 */}
+          /* 原有的阅读模式头部（新增了简介显示和新版按钮组） */
+          <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
+                <p className="text-gray-500 mb-4 flex items-center gap-3">
+                  <span>👤 作者: {prompt.profiles?.username}</span>
                   <button 
                     onClick={handleToggleLike}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full border transition-all duration-300 ${
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition-all duration-300 ${
                       isLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-500'
                     }`}
                   >
-                    <span className={`transition-transform ${isLiked ? 'scale-110' : ''}`}>❤️</span>
+                    <span className={isLiked ? 'scale-110' : ''}>❤️</span>
                     <span className="font-mono font-bold">{likesCount}</span>
                   </button>
-                </div>
-                {/* 👇 修改判断条件：作者或管理员都可见 👇 */}
-                {(isAuthor || isAdmin) && (
+                </p>
+                {/* 简介展示区 */}
+                {prompt.description && (
+                  <p className="text-gray-700 text-sm leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100 mb-2">
+                    {prompt.description}
+                  </p>
+                )}
+              </div>
+
+              {/* 操作按钮组 (作者或管理员可见) */}
+              {hasPermission && !isEditing && (
+                <div className="flex flex-col gap-2 shrink-0">
+                  <button 
+                    onClick={() => setIsEditingMeta(true)}
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2"
+                  >
+                    ⚙️ 修改标题和简介
+                    {!isAuthor && isAdmin && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 rounded-full">管理</span>}
+                  </button>
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium transition flex items-center gap-2"
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2 shadow-sm"
                   >
-                    ✏️ 编辑
-                    {/* 给管理员一个小小的炫耀徽章 */}
-                    {!isAuthor && isAdmin && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">管理越权</span>}
+                    <span className="text-xs bg-blue-600 text-white px-1.5 py-0.5 rounded-full">V{versions.length + 1}</span>
+                    发布新版本
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
+          </div>
+        )}
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-900 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <h2 className="text-white font-medium">⏱️ 版本记录</h2>
-                  <button 
-                    onClick={() => setIsCompareMode(!isCompareMode)}
-                    className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                  >
-                    {isCompareMode ? '关闭对比' : '开启版本比对'}
-                  </button>
-                </div>
-                
-                <div className="flex gap-3 items-center">
-                  {isCompareMode && (
-                    <>
-                      <span className="text-gray-400 text-sm">对比:</span>
-                      <select value={targetIndex} onChange={e => setTargetIndex(Number(e.target.value))} className="bg-gray-800 text-red-400 p-1.5 rounded text-sm font-mono">
-                        {versions.map((v, i) => <option key={v.id} value={i}>v{versions.length - i}</option>)}
-                      </select>
-                      <span className="text-gray-400 text-sm">与</span>
-                    </>
-                  )}
-
-                  <select 
-                    value={selectedIndex}
-                    onChange={e => setSelectedIndex(Number(e.target.value))}
-                    className="bg-gray-800 text-green-400 p-1.5 rounded text-sm font-mono"
-                  >
-                    {versions.map((v, i) => (
-                      <option key={v.id} value={i}>v{versions.length - i} {i === 0 ? '(最新)' : ''}</option>
-                    ))}
-                  </select>
-                  <button onClick={handleCopy} className="bg-gray-700 text-white px-4 py-1.5 rounded text-sm font-medium">
-                    {copied ? '✅' : '📋 复制'}
-                  </button>
-                </div>
+        {/* 代码版本编辑表单 (剔除了标题输入框) */}
+        {isEditing ? (
+          <form onSubmit={handleVersionUpdate} className="bg-white p-8 rounded-xl shadow-lg border-2 border-blue-500 mb-6 space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                🚀 编写 V{versions.length + 1} 版本
+              </h2>
+              <span className="text-sm text-gray-500">仅更新代码内容，不影响主表基础信息</span>
+            </div>
+            
+            <textarea 
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              className="w-full p-4 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
+              rows={12}
+              placeholder="输入最新的指令内容..."
+            />
+            <textarea 
+              value={commitMsg}
+              onChange={e => setCommitMsg(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+              className="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              placeholder="更新日志 (例如：优化了上下文理解逻辑)"
+            />
+            <div className="flex gap-4">
+              <button disabled={saving} type="submit" className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                {saving ? '提交中...' : '提交新版本'}
+              </button>
+              <button type="button" onClick={() => setIsEditing(false)} className="px-6 py-3 text-gray-600 font-medium hover:bg-gray-100 rounded-lg">
+                取消
+              </button>
+            </div>
+          </form>
+        ) : (
+          /* 版本记录与代码对比区域 (保持不变) */
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-gray-900 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <h2 className="text-white font-medium">⏱️ 版本记录</h2>
+                <button 
+                  onClick={() => setIsCompareMode(!isCompareMode)}
+                  className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                >
+                  {isCompareMode ? '关闭对比' : '开启版本比对'}
+                </button>
               </div>
               
-              <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-[300px] text-gray-800">
-                {isCompareMode ? (
-                  Diff.diffWords(versions[targetIndex]?.content || '', versions[selectedIndex]?.content || '').map((part, i) => (
-                    <span key={i} className={part.added ? 'bg-green-100 text-green-800 font-bold' : part.removed ? 'bg-red-100 text-red-800 line-through' : ''}>
-                      {part.value}
-                    </span>
-                  ))
-                ) : (
-                  <span>{versions[selectedIndex]?.content}</span>
+              <div className="flex gap-3 items-center">
+                {isCompareMode && (
+                  <>
+                    <span className="text-gray-400 text-sm">对比:</span>
+                    <select value={targetIndex} onChange={e => setTargetIndex(Number(e.target.value))} className="bg-gray-800 text-red-400 p-1.5 rounded text-sm font-mono">
+                      {versions.map((v, i) => <option key={v.id} value={i}>v{versions.length - i}</option>)}
+                    </select>
+                    <span className="text-gray-400 text-sm">与</span>
+                  </>
                 )}
+
+                <select 
+                  value={selectedIndex}
+                  onChange={e => setSelectedIndex(Number(e.target.value))}
+                  className="bg-gray-800 text-green-400 p-1.5 rounded text-sm font-mono"
+                >
+                  {versions.map((v, i) => (
+                    <option key={v.id} value={i}>v{versions.length - i} {i === 0 ? '(最新)' : ''}</option>
+                  ))}
+                </select>
+                <button onClick={handleCopy} className="bg-gray-700 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-gray-600">
+                  {copied ? '✅' : '📋 复制'}
+                </button>
               </div>
             </div>
+            
+            <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-[300px] text-gray-800">
+              {isCompareMode ? (
+                Diff.diffWords(versions[targetIndex]?.content || '', versions[selectedIndex]?.content || '').map((part, i) => (
+                  <span key={i} className={part.added ? 'bg-green-100 text-green-800 font-bold' : part.removed ? 'bg-red-100 text-red-800 line-through' : ''}>
+                    {part.value}
+                  </span>
+                ))
+              ) : (
+                <span>{versions[selectedIndex]?.content}</span>
+              )}
+            </div>
+          </div>
+        )}
 
-            {/* 危险区域 (仅作者可见) */}
-            {(isAuthor || isAdmin) && (
-              <div className="mt-12 pt-8 border-t border-red-200">
-                <h3 className="text-red-500 font-bold mb-4">⚠️ 危险区域</h3>
-                <div className="bg-red-50/50 rounded-xl p-6 border border-red-100 flex items-center justify-between">
-                  <p className="text-red-700 text-sm">删除此 Prompt 后，所有版本记录都将永久消失。</p>
-                  <button
-                    onClick={() => setShowDeleteModal(true)}
-                    className="px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition-all font-medium"
-                  >
-                    彻底删除
-                  </button>
-                </div>
+        {/* 危险区域 */}
+        {hasPermission && (
+          <div className="mt-12 pt-8 border-t border-red-200">
+            <h3 className="text-red-500 font-bold mb-4 flex items-center gap-2">
+              ⚠️ 危险区域
+              {!isAuthor && isAdmin && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full">🛡️ 上帝视角</span>}
+            </h3>
+            <div className="bg-red-50/50 rounded-xl p-6 border border-red-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h4 className="text-red-900 font-medium text-lg">彻底抹除此 Prompt</h4>
+                <p className="text-red-700/80 text-sm mt-1">删除后，所有版本记录和点赞数据都将永久消失。</p>
               </div>
-            )}
-          </>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="shrink-0 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-600 hover:text-white transition-all font-medium shadow-sm"
+              >
+                删除 Prompt
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
-      {/* 删除确认 Modal */}
+      {/* 弹窗保持不变 */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-900/60 backdrop-blur-sm transition-all">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl scale-in-center">
@@ -345,8 +412,8 @@ export default function PromptDetailPage() {
             <h3 className="text-xl font-bold text-center text-gray-900 mb-2">确认毁灭吗？</h3>
             <p className="text-gray-500 text-center text-sm mb-6">此操作不可逆。该 Prompt 将从水世界中被物理抹除。</p>
             <div className="flex gap-3">
-              <button onClick={() => setShowDeleteModal(false)} disabled={isDeleting} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium">再想想</button>
-              <button onClick={executeDelete} disabled={isDeleting} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium">
+              <button onClick={() => setShowDeleteModal(false)} disabled={isDeleting} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200">再想想</button>
+              <button onClick={executeDelete} disabled={isDeleting} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 flex justify-center">
                 {isDeleting ? '蒸发中...' : '确认删除'}
               </button>
             </div>
