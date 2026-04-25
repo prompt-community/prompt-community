@@ -37,6 +37,7 @@ export default function PromptDetailPage() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<User | null>(null) // 新增用户信息状态
   const [isAuthor, setIsAuthor] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false) // 新增：管理员状态
   
   // 交互状态
   const [isEditing, setIsEditing] = useState(false)
@@ -63,7 +64,17 @@ export default function PromptDetailPage() {
     const fetchData = async () => {
       // 1. 获取当前用户
       const user = await authService.getCurrentUser()
+      console.log("👤 当前用户:", user)
       setCurrentUser(user)
+
+      // 新增：查验水世界通行证段位（是否为管理员）
+      if (user) {
+        const role = await authService.getRole()
+        console.log("👤 当前用户:", role)
+        if (role === 'admin') {
+          setIsAdmin(true)
+        }
+      }
 
       // 2. 获取 Prompt 主表数据
       const { data: promptData, error: pError } = await supabase
@@ -234,12 +245,15 @@ export default function PromptDetailPage() {
                     <span className="font-mono font-bold">{likesCount}</span>
                   </button>
                 </div>
-                {isAuthor && (
+                {/* 👇 修改判断条件：作者或管理员都可见 👇 */}
+                {(isAuthor || isAdmin) && (
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium transition"
+                    className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md font-medium transition flex items-center gap-2"
                   >
                     ✏️ 编辑
+                    {/* 给管理员一个小小的炫耀徽章 */}
+                    {!isAuthor && isAdmin && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">管理越权</span>}
                   </button>
                 )}
               </div>
@@ -297,7 +311,7 @@ export default function PromptDetailPage() {
             </div>
 
             {/* 危险区域 (仅作者可见) */}
-            {isAuthor && (
+            {(isAuthor || isAdmin) && (
               <div className="mt-12 pt-8 border-t border-red-200">
                 <h3 className="text-red-500 font-bold mb-4">⚠️ 危险区域</h3>
                 <div className="bg-red-50/50 rounded-xl p-6 border border-red-100 flex items-center justify-between">
