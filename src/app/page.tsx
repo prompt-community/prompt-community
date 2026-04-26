@@ -1,15 +1,27 @@
 // src/app/page.tsx
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
+import TagFilter from '@/components/TagFilter'
 // import Navbar from '@/components/Navbar'
 
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
 export const dynamic = 'force-dynamic'
 
-export default async function Home() {
+export default async function Home({ 
+  searchParams 
+}: { 
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> 
+}) {
+  const params = await searchParams
+  const tagsParam = params?.tags as string | undefined
+  const modeParam = params?.mode as 'and' | 'or' | undefined
+  
+  const selectedTags = tagsParam ? tagsParam.split(',') : []
+  const mode = modeParam === 'and' ? 'and' : 'or'
+
   // 1. SSR 服务端直接连库拉取数据
   // 这里的神来之笔是 `profiles(username)`，它会自动通过外键帮你把作者的名字带出来！
-  const { data: prompts, error } = await supabase
+  let query = supabase
     .from('prompts')
     .select(`
       *,
@@ -20,6 +32,17 @@ export default async function Home() {
     `)
     .order('created_at', { ascending: false }) // 按时间倒序，最新的在前面
 
+  // 根据选中的标签和匹配模式动态追加过滤条件
+  if (selectedTags.length > 0) {
+    if (mode === 'and') {
+      query = query.contains('tags', selectedTags)
+    } else {
+      query = query.overlaps('tags', selectedTags)
+    }
+  }
+
+  const { data: prompts, error } = await query
+
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
 
@@ -27,7 +50,8 @@ export default async function Home() {
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-3">停下脚步，接一杯灵感</h2>
-          <p className="text-gray-500">探索由中科大同学们分享的优质 Prompt。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
+          <p className="text-gray-500 mb-6">探索由中科大同学们分享的优质 Prompt。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
+          <TagFilter selectedTags={selectedTags} mode={mode} />
         </div>
 
         {/* 错误拦截提示 */}
@@ -74,9 +98,18 @@ export default async function Home() {
                     </div>
                     {/* 预留标签位置 */}
                     {prompt.tags && prompt.tags.length > 0 && (
-                      <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
-                        #{prompt.tags[0]}
-                      </span>
+                      <div className="flex gap-1 overflow-hidden">
+                        {prompt.tags.slice(0, 3).map((tag: string) => (
+                          <span key={tag} className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200 whitespace-nowrap">
+                            #{tag}
+                          </span>
+                        ))}
+                        {prompt.tags.length > 3 && (
+                          <span className="text-xs font-medium text-gray-400 px-1 py-1">
+                            +{prompt.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </Link>
