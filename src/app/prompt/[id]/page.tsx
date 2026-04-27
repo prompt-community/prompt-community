@@ -76,6 +76,38 @@ export default function PromptDetailPage() {
         }
       }
 
+      if (typeof id === 'string' && id.startsWith('preset-')) {
+        // 这是本地预设 Prompt，从 API 路由拉取数据
+        try {
+          const res = await fetch(`/api/presets/${id}`)
+          if (!res.ok) throw new Error('Preset not found')
+          const presetData = await res.json()
+          
+          setPrompt(presetData)
+          setLikesCount(presetData.likes_count)
+          
+          // 伪造版本历史，仅展示初始预设内容
+          setVersions([{
+            id: 'v1',
+            prompt_id: presetData.id,
+            content: presetData._rawContent,
+            commit_message: presetData._rawCommitMsg || 'Initial preset version',
+            created_at: presetData.created_at
+          }])
+          setEditContent(presetData._rawContent)
+          
+          // 预设模式下强行褫夺所有编辑权限
+          setIsAuthor(false)
+          setIsAdmin(false)
+          
+          setLoading(false)
+          return
+        } catch (err) {
+          console.error('Error fetching preset:', err)
+          return setLoading(false)
+        }
+      }
+
       // 获取主表数据
       const { data: promptData, error: pError } = await supabase
         .from('prompts')

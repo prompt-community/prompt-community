@@ -7,10 +7,12 @@ const PRESET_TAGS = ['开发', '学术', '写作', '设计', '效率', '娱乐']
 
 export default function TagFilter({
   selectedTags = [],
-  mode = 'or'
+  mode = 'or',
+  presetOnly = false
 }: {
   selectedTags: string[]
   mode: 'and' | 'or'
+  presetOnly?: boolean
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -18,12 +20,14 @@ export default function TagFilter({
   // 乐观更新的状态
   const [optimisticTags, setOptimisticTags] = useState(selectedTags)
   const [optimisticMode, setOptimisticMode] = useState(mode)
+  const [optimisticPresetOnly, setOptimisticPresetOnly] = useState(presetOnly)
 
   // 当服务端响应完成（props改变）时，同步最新状态
   useEffect(() => {
     setOptimisticTags(selectedTags)
     setOptimisticMode(mode)
-  }, [selectedTags, mode])
+    setOptimisticPresetOnly(presetOnly)
+  }, [selectedTags, mode, presetOnly])
 
   const toggleTag = (tag: string) => {
     let newTags = [...optimisticTags]
@@ -35,7 +39,7 @@ export default function TagFilter({
     
     // 立即更新 UI，不等待网络
     setOptimisticTags(newTags)
-    updateURL(newTags, optimisticMode)
+    updateURL(newTags, optimisticMode, optimisticPresetOnly)
   }
 
   const toggleMode = () => {
@@ -43,16 +47,25 @@ export default function TagFilter({
     
     // 立即更新 UI
     setOptimisticMode(newMode)
-    updateURL(optimisticTags, newMode)
+    updateURL(optimisticTags, newMode, optimisticPresetOnly)
   }
 
-  const updateURL = (tags: string[], newMode: 'and' | 'or') => {
+  const togglePresetOnly = () => {
+    const newPresetOnly = !optimisticPresetOnly
+    setOptimisticPresetOnly(newPresetOnly)
+    updateURL(optimisticTags, optimisticMode, newPresetOnly)
+  }
+
+  const updateURL = (tags: string[], newMode: 'and' | 'or', newPresetOnly: boolean) => {
     const params = new URLSearchParams()
     if (tags.length > 0) {
       params.set('tags', tags.join(','))
     }
     if (newMode !== 'or') {
       params.set('mode', newMode)
+    }
+    if (newPresetOnly) {
+      params.set('presetOnly', 'true')
     }
     
     // 使用 startTransition 触发低优先级的导航，这会点亮 isPending
@@ -84,18 +97,30 @@ export default function TagFilter({
           })}
         </div>
         
-        {optimisticTags.length > 1 && (
-          <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition-all">
-            <span className="text-xs font-medium text-gray-500">匹配模式:</span>
-            <button 
-              onClick={toggleMode}
-              className="flex items-center text-sm font-bold bg-white px-3 py-1 rounded shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              {optimisticMode === 'or' ? '任意包含 (OR)' : '全部包含 (AND)'}
-              <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-            </button>
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors">
+            <input 
+              type="checkbox" 
+              checked={optimisticPresetOnly} 
+              onChange={togglePresetOnly}
+              className="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500"
+            />
+            <span className="text-sm font-bold">🌟 只看预设 Prompt</span>
+          </label>
+
+          {optimisticTags.length > 1 && (
+            <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition-all">
+              <span className="text-xs font-medium text-gray-500">匹配模式:</span>
+              <button 
+                onClick={toggleMode}
+                className="flex items-center text-sm font-bold bg-white px-3 py-1 rounded shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                {optimisticMode === 'or' ? '任意包含 (OR)' : '全部包含 (AND)'}
+                <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 优雅的模糊加载层 */}

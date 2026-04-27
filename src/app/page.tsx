@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import TagFilter from '@/components/TagFilter'
+import { getAllPresets } from '@/lib/presets'
 // import Navbar from '@/components/Navbar'
 
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
@@ -15,33 +16,51 @@ export default async function Home({
   const params = await searchParams
   const tagsParam = params?.tags as string | undefined
   const modeParam = params?.mode as 'and' | 'or' | undefined
+  const presetOnly = params?.presetOnly === 'true'
   
   const selectedTags = tagsParam ? tagsParam.split(',') : []
   const mode = modeParam === 'and' ? 'and' : 'or'
 
-  // 1. SSR 服务端直接连库拉取数据
-  // 这里的神来之笔是 `profiles(username)`，它会自动通过外键帮你把作者的名字带出来！
-  let query = supabase
-    .from('prompts')
-    .select(`
-      *,
-      profiles (
-        username,
-        avatar_url
-      )
-    `)
-    .order('created_at', { ascending: false }) // 按时间倒序，最新的在前面
+  let prompts: any[] = []
+  let error: any = null
 
-  // 根据选中的标签和匹配模式动态追加过滤条件
-  if (selectedTags.length > 0) {
-    if (mode === 'and') {
-      query = query.contains('tags', selectedTags)
-    } else {
-      query = query.overlaps('tags', selectedTags)
+  if (presetOnly) {
+    let allPresets = getAllPresets()
+    if (selectedTags.length > 0) {
+      if (mode === 'and') {
+        allPresets = allPresets.filter(p => selectedTags.every(tag => p.tags.includes(tag)))
+      } else {
+        allPresets = allPresets.filter(p => selectedTags.some(tag => p.tags.includes(tag)))
+      }
     }
-  }
+    prompts = allPresets
+  } else {
+    // 1. SSR 服务端直接连库拉取数据
+    // 这里的神来之笔是 `profiles(username)`，它会自动通过外键帮你把作者的名字带出来！
+    let query = supabase
+      .from('prompts')
+      .select(`
+        *,
+        profiles (
+          username,
+          avatar_url
+        )
+      `)
+      .order('created_at', { ascending: false }) // 按时间倒序，最新的在前面
 
-  const { data: prompts, error } = await query
+    // 根据选中的标签和匹配模式动态追加过滤条件
+    if (selectedTags.length > 0) {
+      if (mode === 'and') {
+        query = query.contains('tags', selectedTags)
+      } else {
+        query = query.overlaps('tags', selectedTags)
+      }
+    }
+
+    const res = await query
+    prompts = res.data || []
+    error = res.error
+  }
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
@@ -51,7 +70,7 @@ export default async function Home({
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-3">停下脚步，接一杯灵感</h2>
           <p className="text-gray-500 mb-6">探索由中科大同学们分享的优质 Prompt。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
-          <TagFilter selectedTags={selectedTags} mode={mode} />
+          <TagFilter selectedTags={selectedTags} mode={mode} presetOnly={presetOnly} />
         </div>
 
         {/* 错误拦截提示 */}
@@ -74,12 +93,12 @@ export default async function Home({
 
               return (
                 <Link href={`/prompt/${prompt.id}`} key={prompt.id} className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-xl transition-shadow duration-300 flex flex-col group cursor-pointer">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                  <div className="flex justify-between items-start mb-3 gap-3">
+                    <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors flex-1">
                       {prompt.title}
                     </h3>
-                    <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold">
-                      👍 {prompt.likes_count}
+                    <span className="bg-blue-50 text-blue-600 text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap shrink-0">
+                      👍 {prompt.likes_count > 99 ? '99+' : prompt.likes_count}
                     </span>
                   </div>
                   
