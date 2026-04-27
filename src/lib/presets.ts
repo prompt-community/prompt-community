@@ -1,5 +1,4 @@
-import fs from 'fs'
-import path from 'path'
+import { presetFiles } from '@/data/presets';
 
 export interface PresetPrompt {
   title: string
@@ -9,31 +8,21 @@ export interface PresetPrompt {
   commit_message?: string
 }
 
-export function getAllPresets(): any[] {
-  const presetsDir = path.join(process.cwd(), 'src/data/presets')
-  let files: string[] = []
-  try {
-    files = fs.readdirSync(presetsDir)
-  } catch (err) {
-    console.error('Error reading presets directory', err)
-    return []
-  }
+// 固定的假时间，防止每次调用生成新时间导致 React 重新渲染警告
+const MOCK_DATE = new Date('2024-01-01T00:00:00Z').toISOString();
 
-  const jsonFiles = files.filter(f => f.endsWith('.json'))
-  
-  const presets = jsonFiles.map(file => {
-    const filePath = path.join(presetsDir, file)
-    const fileContent = fs.readFileSync(filePath, 'utf-8')
-    const data = JSON.parse(fileContent) as PresetPrompt
+export function getAllPresets(): any[] {
+  const presets = Object.keys(presetFiles).map(key => {
+    const data = presetFiles[key] as PresetPrompt;
     
     return {
-      id: `preset-${file.replace('.json', '')}`,
+      id: `preset-${key}`,
       author_id: 'preset-author',
       title: data.title,
       description: data.description,
       tags: data.tags,
       likes_count: 99, 
-      created_at: new Date().toISOString(),
+      created_at: MOCK_DATE,
       profiles: {
         username: '官方预设',
         avatar_url: null
@@ -43,36 +32,31 @@ export function getAllPresets(): any[] {
     }
   })
 
-  // 按最新时间排序可以不做，因为假数据时间是一样的，可以就按文件名或者默认顺序
   return presets
 }
 
 export function getPresetById(id: string): any | null {
-  const presetsDir = path.join(process.cwd(), 'src/data/presets')
-  const filename = id.replace('preset-', '') + '.json'
-  const filePath = path.join(presetsDir, filename)
+  const key = id.replace('preset-', '');
+  const data = presetFiles[key] as PresetPrompt;
   
-  try {
-    const fileContent = fs.readFileSync(filePath, 'utf-8')
-    const data = JSON.parse(fileContent) as PresetPrompt
-    
-    return {
-      id: id,
-      author_id: 'preset-author',
-      title: data.title,
-      description: data.description,
-      tags: data.tags,
-      likes_count: 99,
-      created_at: new Date().toISOString(),
-      profiles: {
-        username: '官方预设',
-        avatar_url: null
-      },
-      _rawContent: data.content,
-      _rawCommitMsg: data.commit_message
-    }
-  } catch (err) {
-    console.error('Error reading preset file', id, err)
+  if (!data) {
+    console.error('Error finding preset file for key:', key)
     return null
+  }
+  
+  return {
+    id: id,
+    author_id: 'preset-author',
+    title: data.title,
+    description: data.description,
+    tags: data.tags,
+    likes_count: 99,
+    created_at: MOCK_DATE,
+    profiles: {
+      username: '官方预设',
+      avatar_url: null
+    },
+    _rawContent: data.content,
+    _rawCommitMsg: data.commit_message
   }
 }
