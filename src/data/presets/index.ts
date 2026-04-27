@@ -1,11 +1,11 @@
-import p1 from './p1.json';
-import p2 from './p2.json';
-import p3 from './p3.json';
-import p4 from './p4.json';
-import p5 from './p5.json';
-import p6 from './p6.json';
-import p7 from './p7.json';
-import p8 from './p8.json';
+const p1 = require('./p1.json');
+const p2 = require('./p2.json');
+const p3 = require('./p3.json');
+const p4 = require('./p4.json');
+const p5 = require('./p5.json');
+const p6 = require('./p6.json');
+const p7 = require('./p7.json');
+const p8 = require('./p8.json');
 
 export const presetFiles: Record<string, any> = {
   p1,
