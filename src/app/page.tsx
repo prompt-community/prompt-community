@@ -8,16 +8,16 @@ import { getAllPresets } from '@/lib/presets'
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
 export const dynamic = 'force-dynamic'
 
-export default async function Home({ 
-  searchParams 
-}: { 
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> 
+export default async function Home({
+  searchParams
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
   const tagsParam = params?.tags as string | undefined
   const modeParam = params?.mode as 'and' | 'or' | undefined
   const presetOnly = params?.presetOnly === 'true'
-  
+
   const selectedTags = tagsParam ? tagsParam.split(',') : []
   const mode = modeParam === 'and' ? 'and' : 'or'
 
@@ -69,7 +69,7 @@ export default async function Home({
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-3">停下脚步，接一杯灵感</h2>
-          <p className="text-gray-500 mb-6">探索由中科大同学们分享的优质 Prompt。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
+          <p className="text-gray-500 mb-6">探索由中科大同学们分享的优质提示词。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
           <TagFilter selectedTags={selectedTags} mode={mode} presetOnly={presetOnly} />
         </div>
 
@@ -101,11 +101,11 @@ export default async function Home({
                       👍 {prompt.likes_count > 99 ? '99+' : prompt.likes_count}
                     </span>
                   </div>
-                  
+
                   <p className="text-gray-600 text-sm mb-5 flex-grow line-clamp-3 leading-relaxed">
                     {prompt.description || "这位水分子很懒，没有写任何描述..."}
                   </p>
-                  
+
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs font-bold text-white shadow-inner">

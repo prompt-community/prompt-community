@@ -36,7 +36,7 @@ export default function TagFilter({
     } else {
       newTags.push(tag)
     }
-    
+
     // 立即更新 UI，不等待网络
     setOptimisticTags(newTags)
     updateURL(newTags, optimisticMode, optimisticPresetOnly)
@@ -44,7 +44,7 @@ export default function TagFilter({
 
   const toggleMode = () => {
     const newMode = optimisticMode === 'or' ? 'and' : 'or'
-    
+
     // 立即更新 UI
     setOptimisticMode(newMode)
     updateURL(optimisticTags, newMode, optimisticPresetOnly)
@@ -67,7 +67,7 @@ export default function TagFilter({
     if (newPresetOnly) {
       params.set('presetOnly', 'true')
     }
-    
+
     // 使用 startTransition 触发低优先级的导航，这会点亮 isPending
     startTransition(() => {
       router.push(`/?${params.toString()}`)
@@ -85,33 +85,32 @@ export default function TagFilter({
               <button
                 key={tag}
                 onClick={() => toggleTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  isSelected 
-                    ? 'bg-blue-600 text-white shadow-md' 
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isSelected
+                    ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 {tag}
               </button>
             )
           })}
         </div>
-        
+
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors">
-            <input 
-              type="checkbox" 
-              checked={optimisticPresetOnly} 
+            <input
+              type="checkbox"
+              checked={optimisticPresetOnly}
               onChange={togglePresetOnly}
               className="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500"
             />
-            <span className="text-sm font-bold">🌟 只看预设 Prompt</span>
+            <span className="text-sm font-bold">🌟 查看预设 Prompt</span>
           </label>
 
           {optimisticTags.length > 1 && (
             <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition-all">
               <span className="text-xs font-medium text-gray-500">匹配模式:</span>
-              <button 
+              <button
                 onClick={toggleMode}
                 className="flex items-center text-sm font-bold bg-white px-3 py-1 rounded shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               >

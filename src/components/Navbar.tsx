@@ -53,7 +53,7 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo 区 */}
         <Link href="/" className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          💧 <span className="hidden sm:inline"> Prompt 饮水机 - 优质 Prompt 开源社区</span>
+          💧 <span className="hidden sm:inline"> Prompt 饮水机 - 优质 AI 提示词开源社区</span>
           <span className="sm:hidden">Prompt 饮水机</span>
         </Link>
 
@@ -67,8 +67,8 @@ export default function Navbar() {
               <span className="text-gray-700 font-medium text-sm">
                 你好, <span className="text-blue-600">{displayName}</span>
               </span>
-              <button 
-                onClick={handleSignOut} 
+              <button
+                onClick={handleSignOut}
                 className="text-gray-500 hover:text-red-600 font-medium text-sm transition"
               >
                 退出
@@ -92,8 +92,8 @@ export default function Navbar() {
 
         {/* 移动端汉堡按钮 */}
         <div className="md:hidden flex items-center">
-          <button 
-            onClick={() => setIsOpen(!isOpen)} 
+          <button
+            onClick={() => setIsOpen(!isOpen)}
             className="text-gray-600 hover:text-gray-900 focus:outline-none p-2"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,14 +115,14 @@ export default function Navbar() {
               <div className="px-2 py-1 text-gray-700 font-bold border-b border-gray-200">
                 👤 {displayName}
               </div>
-              <Link 
-                href="/publish" 
+              <Link
+                href="/publish"
                 onClick={() => setIsOpen(false)}
                 className="block bg-blue-600 text-white px-4 py-3 rounded-lg text-center font-bold text-base shadow-sm"
               >
                 + 发布 Prompt
               </Link>
-              <button 
+              <button
                 onClick={() => { handleSignOut(); setIsOpen(false); }}
                 className="w-full text-center py-2 text-red-500 font-medium"
               >
@@ -131,13 +131,13 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <a 
+              <a
                 href={AUTH_URL}
                 className="block text-gray-700 font-medium text-base hover:text-blue-600 transition px-2"
               >
                 登录 / 注册
               </a>
-              <a 
+              <a
                 href={AUTH_URL}
                 className="block bg-blue-600 text-white px-4 py-3 rounded-lg text-center font-bold text-base shadow-sm"
               >
