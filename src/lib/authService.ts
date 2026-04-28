@@ -62,5 +62,44 @@ export const authService = {
     }
 
     return profile.role
+  },
+
+  // 4. 获取完整的用户个人资料
+  async getUserProfile() {
+    const user = await this.getCurrentUser()
+    if (!user) return null
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('username, avatar_url, role, points')
+      .eq('id', user.id)
+      .single()
+
+    if (error) {
+      console.error("❌ 获取用户 profile 失败：", error)
+      return null
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      username: profile.username,
+      avatar_url: profile.avatar_url,
+      role: profile.role,
+      points: profile.points || 0
+    }
+  },
+
+  // 5. 更新用户昵称
+  async updateUsername(userId: string, newUsername: string) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ username: newUsername })
+      .eq('id', userId)
+
+    if (error) {
+      console.error("❌ 更新昵称失败：", error)
+      throw error
+    }
   }
 }
