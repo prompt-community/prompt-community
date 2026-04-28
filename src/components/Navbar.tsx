@@ -38,27 +38,47 @@ export default function Navbar() {
   const AUTH_URL = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki"
 
   useEffect(() => {
-    // 1. 组件挂载时获取当前用户详细资料
-    const fetchUser = async () => {
-      const profile = await authService.getUserProfile()
-      setUser(profile)
-      setLoading(false)
+    let mounted = true;
+
+    // 1. 定义安全的数据拉取函数
+    const loadProfile = async () => {
+      try {
+        const profile = await authService.getUserProfile()
+        if (mounted) {
+          setUser(profile)
+        }
+      } catch (error) {
+        console.error("Navbar fetchUser error:", error)
+        if (mounted) setUser(null)
+      } finally {
+        if (mounted) setLoading(false)
+      }
     }
-    fetchUser()
+
+    // 初始化获取
+    loadProfile()
 
     // 2. 监听登录状态变化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (process.env.NODE_ENV === 'development') return
       
+      // 忽略 INITIAL_SESSION，避免与上方的 loadProfile 发生并发请求冲突，导致 Auth Token 刷新死锁抛错
+      if (event === 'INITIAL_SESSION') return;
+
       if (session?.user) {
-        const profile = await authService.getUserProfile()
-        setUser(profile)
+        loadProfile()
       } else {
-        setUser(null)
+        if (mounted) {
+          setUser(null)
+          setLoading(false)
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const handleSignOut = async () => {
