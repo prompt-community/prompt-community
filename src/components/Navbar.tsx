@@ -75,9 +75,16 @@ export default function Navbar() {
       }
     })
 
+    // 3. 监听全局自定义事件：用于跨组件触发 Navbar 数据刷新（如发布、点赞等操作后）
+    const handleProfileUpdate = () => {
+      loadProfile()
+    }
+    window.addEventListener('profileUpdated', handleProfileUpdate)
+
     return () => {
       mounted = false
       subscription.unsubscribe()
+      window.removeEventListener('profileUpdated', handleProfileUpdate)
     }
   }, [])
 

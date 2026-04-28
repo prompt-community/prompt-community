@@ -107,6 +107,7 @@ export default function PublishPage() {
       // 3. 发布成功，跳转回大厅！
       router.push('/')
       router.refresh() // 强制 Next.js 清除 SSR 缓存，瞬间展示新数据
+      window.dispatchEvent(new Event('profileUpdated'))
 
     } catch (error) {
       setErrorMsg((error as Error).message || '发布失败，请检查网络或控制台')

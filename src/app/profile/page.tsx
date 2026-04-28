@@ -98,6 +98,7 @@ export default function ProfilePage() {
       setProfile({ ...profile, username: trimmed })
       toast.success('昵称修改成功！')
       setIsEditing(false)
+      window.dispatchEvent(new Event('profileUpdated'))
     } catch (error) {
       toast.error('修改失败，可能是网络错误')
     } finally {
