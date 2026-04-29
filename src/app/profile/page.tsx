@@ -175,36 +175,41 @@ export default function ProfilePage() {
 
             {/* User Info */}
             <div className="space-y-2 mb-10">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {isEditing ? (
-                  <div className="flex items-center gap-2">
+                  // 1. 父容器增加 flex-wrap 允许换行，并稍微加大 gap 保证换行后的上下间距
+                  <div className="flex flex-wrap items-center gap-3">
                     <input
                       type="text"
                       value={editUsername}
                       onChange={(e) => setEditUsername(e.target.value)}
                       placeholder="请输入昵称"
                       disabled={isSaving}
-                      className="text-2xl font-extrabold text-gray-900 border-2 border-blue-500 rounded-lg px-3 py-1 outline-none w-64 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white shadow-sm"
+                      // 2. 将固定的 w-64 改为 w-full sm:w-64：在手机上占满整行，在宽屏上保持原来的宽度
+                      className="text-2xl font-extrabold text-gray-900 border-2 border-blue-500 rounded-lg px-3 py-1 outline-none w-full sm:w-64 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white shadow-sm"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleSaveUsername()
                         if (e.key === 'Escape') handleCancelEdit()
                       }}
                     />
-                    <button
-                      onClick={handleSaveUsername}
-                      disabled={isSaving}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold shadow-sm transition-colors text-sm disabled:opacity-50"
-                    >
-                      {isSaving ? '保存中...' : '保存'}
-                    </button>
-                    <button
-                      onClick={handleCancelEdit}
-                      disabled={isSaving}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-1.5 rounded-lg font-bold shadow-sm transition-colors text-sm disabled:opacity-50"
-                    >
-                      取消
-                    </button>
+                    {/* 3. 将两个按钮用一个新的 flex 容器包裹起来，确保它们在换行时同进同退 */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleSaveUsername}
+                        disabled={isSaving}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg font-bold shadow-sm transition-colors text-sm disabled:opacity-50"
+                      >
+                        {isSaving ? '保存中...' : '保存'}
+                      </button>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-1.5 rounded-lg font-bold shadow-sm transition-colors text-sm disabled:opacity-50"
+                      >
+                        取消
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <>
