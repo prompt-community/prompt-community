@@ -8,6 +8,8 @@ import * as Diff from 'diff'
 import { authService } from '@/lib/authService'
 import { toast } from 'react-hot-toast'
 import { User } from '@supabase/supabase-js'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 // import { constrainedMemory } from 'process'
 
 interface PromptData {
@@ -55,6 +57,7 @@ export default function PromptDetailPage() {
 
   // 交互状态
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [viewMode, setViewMode] = useState<'preview' | 'source'>('preview')
   const [isCompareMode, setIsCompareMode] = useState(false) 
   const [targetIndex, setTargetIndex] = useState(1)
   const [copied, setCopied] = useState(false)
@@ -365,12 +368,34 @@ export default function PromptDetailPage() {
             <div className="bg-gray-900 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-white font-medium">⏱️ 版本记录</h2>
-                <button 
-                  onClick={() => setIsCompareMode(!isCompareMode)}
-                  className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                >
-                  {isCompareMode ? '关闭对比' : '开启版本比对'}
-                </button>
+                
+                {/* 视图切换按钮组 */}
+                <div className="flex bg-gray-800 rounded-lg p-1">
+                  <button
+                    onClick={() => {
+                      setViewMode('preview');
+                      setIsCompareMode(false);
+                    }}
+                    className={`px-3 py-1 text-xs rounded-md font-bold transition-all ${viewMode === 'preview' ? 'bg-gray-600 text-white shadow' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'}`}
+                  >
+                    👁️ 预览
+                  </button>
+                  <button
+                    onClick={() => setViewMode('source')}
+                    className={`px-3 py-1 text-xs rounded-md font-bold transition-all ${viewMode === 'source' ? 'bg-gray-600 text-white shadow' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'}`}
+                  >
+                    📝 源码
+                  </button>
+                </div>
+
+                {viewMode === 'source' && (
+                  <button 
+                    onClick={() => setIsCompareMode(!isCompareMode)}
+                    className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                  >
+                    {isCompareMode ? '关闭对比' : '开启版本比对'}
+                  </button>
+                )}
               </div>
               
               <div className="flex gap-3 items-center">
@@ -399,8 +424,14 @@ export default function PromptDetailPage() {
               </div>
             </div>
             
-            <div className="p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-[300px] text-gray-800">
-              {isCompareMode ? (
+            <div className={`p-6 min-h-[300px] ${viewMode === 'source' ? 'font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-800' : ''}`}>
+              {viewMode === 'preview' ? (
+                <div className="markdown-body text-gray-800 sm:text-base text-sm">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {versions[selectedIndex]?.content || ''}
+                  </ReactMarkdown>
+                </div>
+              ) : isCompareMode ? (
                 Diff.diffWords(versions[targetIndex]?.content || '', versions[selectedIndex]?.content || '').map((part, i) => (
                   <span key={i} className={part.added ? 'bg-green-100 text-green-800 font-bold' : part.removed ? 'bg-red-100 text-red-800 line-through' : ''}>
                     {part.value}
