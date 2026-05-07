@@ -76,7 +76,7 @@ export default function TagFilter({
 
   return (
     <>
-      <div className="relative z-50 mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="relative mb-6 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-semibold text-gray-500 mr-2">过滤标签:</span>
           {PRESET_TAGS.map(tag => {
