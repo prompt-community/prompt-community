@@ -325,11 +325,11 @@ export default function ProfileIdPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="group relative flex items-start gap-2 max-w-full">
-                    <div className="flex-1">
+                  <div className="group relative inline-flex items-start gap-1 max-w-full bg-white/50 rounded-lg p-1 -ml-1">
+                    <div className="overflow-y-auto max-h-32 pr-1 min-w-0 custom-scrollbar">
                       {profile.bio ? (
-                        <p className="text-gray-600 text-sm italic leading-relaxed break-words">
-                          "{profile.bio}"
+                        <p className="text-gray-600 text-sm italic leading-relaxed break-all whitespace-pre-wrap">
+                          {profile.bio}
                         </p>
                       ) : (
                         <p 
@@ -343,7 +343,7 @@ export default function ProfileIdPage() {
                     {isOwner && profile.bio && (
                       <button
                         onClick={handleEditBioClick}
-                        className="text-gray-400 hover:text-blue-500 p-1 transition-colors focus:outline-none shrink-0 md:opacity-0 md:group-hover:opacity-100 opacity-100"
+                        className="text-gray-400 hover:text-blue-500 p-1 transition-colors focus:outline-none shrink-0"
                         title="编辑签名"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
