@@ -325,20 +325,25 @@ export default function ProfileIdPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="group relative inline-block max-w-full">
-                    {profile.bio ? (
-                      <p className="text-gray-600 text-sm italic leading-relaxed break-words">
-                        "{profile.bio}"
-                      </p>
-                    ) : (
-                      <p className="text-gray-400 text-sm italic">
-                        {isOwner ? '点击添加个性签名...' : '这个人很神秘，还没有写签名...'}
-                      </p>
-                    )}
-                    {isOwner && (
+                  <div className="group relative flex items-start gap-2 max-w-full">
+                    <div className="flex-1">
+                      {profile.bio ? (
+                        <p className="text-gray-600 text-sm italic leading-relaxed break-words">
+                          "{profile.bio}"
+                        </p>
+                      ) : (
+                        <p 
+                          className={`text-sm italic ${isOwner ? 'text-blue-500 cursor-pointer hover:underline' : 'text-gray-400'}`}
+                          onClick={isOwner ? handleEditBioClick : undefined}
+                        >
+                          {isOwner ? '点击添加个性签名...' : '这个人很神秘，还没有写签名...'}
+                        </p>
+                      )}
+                    </div>
+                    {isOwner && profile.bio && (
                       <button
                         onClick={handleEditBioClick}
-                        className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-blue-500 p-1 transition-opacity focus:outline-none"
+                        className="text-gray-400 hover:text-blue-500 p-1 transition-colors focus:outline-none shrink-0 md:opacity-0 md:group-hover:opacity-100 opacity-100"
                         title="编辑签名"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
