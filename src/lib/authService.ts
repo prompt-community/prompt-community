@@ -71,7 +71,7 @@ export const authService = {
 
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select('username, avatar_url, role, points')
+      .select('username, avatar_url, role, points, bio')
       .eq('id', user.id)
       .single()
 
@@ -86,7 +86,8 @@ export const authService = {
       username: profile.username,
       avatar_url: profile.avatar_url,
       role: profile.role,
-      points: profile.points || 0
+      points: profile.points || 0,
+      bio: profile.bio || ''
     }
   },
 
@@ -99,6 +100,43 @@ export const authService = {
 
     if (error) {
       console.error("❌ 更新昵称失败：", error)
+      throw error
+    }
+  },
+
+  // 6. 获取指定用户的公开资料
+  async getProfileById(userId: string) {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('username, avatar_url, role, points, bio')
+      .eq('id', userId)
+      .single()
+
+    if (error) {
+      console.error("❌ 获取指定用户 profile 失败：", error)
+      return null
+    }
+
+    return {
+      id: userId,
+      // email 隐私保护，不在这里返回
+      username: profile.username,
+      avatar_url: profile.avatar_url,
+      role: profile.role,
+      points: profile.points || 0,
+      bio: profile.bio || ''
+    }
+  },
+
+  // 7. 更新个性签名
+  async updateBio(userId: string, newBio: string) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ bio: newBio })
+      .eq('id', userId)
+
+    if (error) {
+      console.error("❌ 更新个性签名失败：", error)
       throw error
     }
   }

@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast'
 import { User } from '@supabase/supabase-js'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import Link from 'next/link'
 // import { constrainedMemory } from 'process'
 
 interface PromptData {
@@ -387,7 +388,12 @@ export default function PromptDetailPage() {
               <div className="flex-1">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
                 <p className="text-gray-500 mb-4 flex items-center gap-3">
-                  <span>👤 作者: {prompt.profiles?.username}</span>
+                  <span className="flex items-center">
+                    👤 作者: 
+                    <Link href={`/profile/${prompt.author_id}`} className="hover:text-blue-600 hover:underline transition ml-1 font-medium">
+                      {prompt.profiles?.username}
+                    </Link>
+                  </span>
                   <button
                     onClick={handleToggleLike}
                     className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition-all duration-300 ${isLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-500'

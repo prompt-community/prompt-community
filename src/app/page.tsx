@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import TagFilter from '@/components/TagFilter'
+import AuthorLink from '@/components/AuthorLink'
 import { getAllPresets } from '@/lib/presets'
 // import Navbar from '@/components/Navbar'
 
@@ -107,14 +108,7 @@ export default async function Home({
                   </p>
 
                   <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs font-bold text-white shadow-inner">
-                        {initial}
-                      </div>
-                      <span className="text-sm text-gray-500 font-medium">
-                        {authorName}
-                      </span>
-                    </div>
+                    <AuthorLink authorId={prompt.author_id} authorName={authorName} initial={initial} />
                     {/* 预留标签位置 */}
                     {(() => {
                       const allTags = [...(prompt.tags || []), ...(prompt.custom_tags || [])];
