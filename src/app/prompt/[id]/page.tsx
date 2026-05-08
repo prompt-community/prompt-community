@@ -34,17 +34,17 @@ interface PromptVersion {
 export default function PromptDetailPage() {
   const { id } = useParams()
   const router = useRouter()
-  
+
   // 核心数据状态
   const [prompt, setPrompt] = useState<PromptData | null>(null)
   const [versions, setVersions] = useState<PromptVersion[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
-  
+
   // 权限状态
   const [isAuthor, setIsAuthor] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
-  
+
   // --- 新增：元数据编辑状态 (标题/简介/标签) ---
   const [isEditingMeta, setIsEditingMeta] = useState(false)
   const [editTitle, setEditTitle] = useState('')
@@ -88,7 +88,7 @@ export default function PromptDetailPage() {
   // 交互状态
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [viewMode, setViewMode] = useState<'preview' | 'source'>('preview')
-  const [isCompareMode, setIsCompareMode] = useState(false) 
+  const [isCompareMode, setIsCompareMode] = useState(false)
   const [targetIndex, setTargetIndex] = useState(1)
   const [copied, setCopied] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
@@ -115,10 +115,10 @@ export default function PromptDetailPage() {
           const res = await fetch(`/api/presets/${id}`)
           if (!res.ok) throw new Error('Preset not found')
           const presetData = await res.json()
-          
+
           setPrompt(presetData)
           setLikesCount(presetData.likes_count)
-          
+
           // 伪造版本历史，仅展示初始预设内容
           setVersions([{
             id: 'v1',
@@ -128,11 +128,11 @@ export default function PromptDetailPage() {
             created_at: presetData.created_at
           }])
           setEditContent(presetData._rawContent)
-          
+
           // 预设模式下强行褫夺所有编辑权限
           setIsAuthor(false)
           setIsAdmin(false)
-          
+
           setLoading(false)
           return
         } catch (err) {
@@ -149,15 +149,15 @@ export default function PromptDetailPage() {
         .single()
 
       if (pError || !promptData) return setLoading(false)
-      
+
       setPrompt(promptData)
       setLikesCount(promptData.likes_count || 0)
-      
+
       // 初始化编辑表单的数据
       setEditTitle(promptData.title)
       setEditDescription(promptData.description || '')
       setEditSelectedTags([...(promptData.tags || []), ...(promptData.custom_tags || [])])
-      
+
       if (user && promptData.author_id === user.id) {
         setIsAuthor(true)
       }
@@ -198,20 +198,20 @@ export default function PromptDetailPage() {
 
       const { error } = await supabase
         .from('prompts')
-        .update({ 
-          title: editTitle, 
+        .update({
+          title: editTitle,
           description: editDescription,
           tags: presetTags,
           custom_tags: customTags
         })
         .eq('id', id)
-        
+
       if (error) throw error
-      
+
       // 乐观更新本地状态
-      setPrompt(prev => prev ? { 
-        ...prev, 
-        title: editTitle, 
+      setPrompt(prev => prev ? {
+        ...prev,
+        title: editTitle,
         description: editDescription,
         tags: presetTags,
         custom_tags: customTags
@@ -297,19 +297,19 @@ export default function PromptDetailPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
       <div className="max-w-4xl mx-auto px-4">
-        
+
         {/* 新增：元数据编辑模式 */}
         {isEditingMeta ? (
           <div className="bg-white p-8 rounded-xl shadow-md border-2 border-gray-200 mb-6 space-y-4">
             <h2 className="text-lg font-bold text-gray-800">⚙️ 修改基础信息</h2>
-            <input 
+            <input
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
               className="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-blue-500"
               placeholder="Prompt 标题"
             />
-            <textarea 
+            <textarea
               value={editDescription}
               onChange={e => setEditDescription(e.target.value)}
               className="w-full p-3 border rounded-lg text-gray-700 focus:ring-2 focus:ring-blue-500"
@@ -388,11 +388,10 @@ export default function PromptDetailPage() {
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{prompt.title}</h1>
                 <p className="text-gray-500 mb-4 flex items-center gap-3">
                   <span>👤 作者: {prompt.profiles?.username}</span>
-                  <button 
+                  <button
                     onClick={handleToggleLike}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition-all duration-300 ${
-                      isLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-500'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition-all duration-300 ${isLiked ? 'bg-red-50 border-red-200 text-red-500' : 'bg-gray-50 border-gray-200 text-gray-500'
+                      }`}
                   >
                     <span className={isLiked ? 'scale-110' : ''}>❤️</span>
                     <span className="font-mono font-bold">{likesCount}</span>
@@ -404,7 +403,7 @@ export default function PromptDetailPage() {
                     {prompt.description}
                   </p>
                 )}
-                
+
                 {/* 标签展示区 */}
                 {(() => {
                   const allTags = [...(prompt.tags || []), ...(prompt.custom_tags || [])];
@@ -424,14 +423,14 @@ export default function PromptDetailPage() {
               {/* 操作按钮组 (作者或管理员可见) */}
               {hasPermission && !isEditing && (
                 <div className="flex flex-col gap-2 shrink-0">
-                  <button 
+                  <button
                     onClick={() => setIsEditingMeta(true)}
                     className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2"
                   >
-                    ⚙️ 修改标题和简介
+                    ⚙️ 修改基础信息
                     {!isAuthor && isAdmin && <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 rounded-full">管理</span>}
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsEditing(true)}
                     className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-4 py-2 rounded-lg font-medium transition text-sm flex items-center justify-center gap-2 shadow-sm"
                   >
@@ -453,15 +452,15 @@ export default function PromptDetailPage() {
               </h2>
               <span className="text-sm text-gray-500">仅更新代码内容，不影响主表基础信息</span>
             </div>
-            
-            <textarea 
+
+            <textarea
               value={editContent}
               onChange={e => setEditContent(e.target.value)}
               className="w-full p-4 border rounded-lg font-mono text-sm focus:ring-2 focus:ring-blue-500"
               rows={12}
               placeholder="输入最新的指令内容..."
             />
-            <textarea 
+            <textarea
               value={commitMsg}
               onChange={e => setCommitMsg(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
@@ -483,7 +482,7 @@ export default function PromptDetailPage() {
             <div className="bg-gray-900 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <h2 className="text-white font-medium">⏱️ 版本记录</h2>
-                
+
                 {/* 视图切换按钮组 */}
                 <div className="flex bg-gray-800 rounded-lg p-1">
                   <button
@@ -504,7 +503,7 @@ export default function PromptDetailPage() {
                 </div>
 
                 {viewMode === 'source' && (
-                  <button 
+                  <button
                     onClick={() => setIsCompareMode(!isCompareMode)}
                     className={`px-3 py-1 text-xs rounded font-bold ${isCompareMode ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
                   >
@@ -512,7 +511,7 @@ export default function PromptDetailPage() {
                   </button>
                 )}
               </div>
-              
+
               <div className="flex gap-3 items-center">
                 {isCompareMode && (
                   <>
@@ -524,7 +523,7 @@ export default function PromptDetailPage() {
                   </>
                 )}
 
-                <select 
+                <select
                   value={selectedIndex}
                   onChange={e => setSelectedIndex(Number(e.target.value))}
                   className="bg-gray-800 text-green-400 p-1.5 rounded text-sm font-mono"
@@ -538,7 +537,7 @@ export default function PromptDetailPage() {
                 </button>
               </div>
             </div>
-            
+
             <div className={`p-6 min-h-[300px] ${viewMode === 'source' ? 'font-mono text-sm leading-relaxed whitespace-pre-wrap text-gray-800' : ''}`}>
               {viewMode === 'preview' ? (
                 <div className="markdown-body text-gray-800 sm:text-base text-sm">
