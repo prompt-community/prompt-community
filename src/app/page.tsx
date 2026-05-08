@@ -116,20 +116,24 @@ export default async function Home({
                       </span>
                     </div>
                     {/* 预留标签位置 */}
-                    {prompt.tags && prompt.tags.length > 0 && (
-                      <div className="flex gap-1 overflow-hidden">
-                        {prompt.tags.slice(0, 3).map((tag: string) => (
-                          <span key={tag} className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200 whitespace-nowrap">
-                            #{tag}
-                          </span>
-                        ))}
-                        {prompt.tags.length > 3 && (
-                          <span className="text-xs font-medium text-gray-400 px-1 py-1">
-                            +{prompt.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {(() => {
+                      const allTags = [...(prompt.tags || []), ...(prompt.custom_tags || [])];
+                      if (allTags.length === 0) return null;
+                      return (
+                        <div className="flex gap-1 overflow-hidden">
+                          {allTags.slice(0, 3).map((tag: string) => (
+                            <span key={tag} className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-md border border-gray-200 whitespace-nowrap">
+                              #{tag}
+                            </span>
+                          ))}
+                          {allTags.length > 3 && (
+                            <span className="text-xs font-medium text-gray-400 px-1 py-1">
+                              +{allTags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </Link>
               )

@@ -75,7 +75,11 @@ export default function PublishPage() {
       }
 
       if (selectedTags.length > 0) {
-        payload.tags = selectedTags
+        const presetTags = selectedTags.filter(tag => PRESET_TAGS.includes(tag))
+        const customTags = selectedTags.filter(tag => !PRESET_TAGS.includes(tag))
+        
+        if (presetTags.length > 0) payload.tags = presetTags
+        if (customTags.length > 0) payload.custom_tags = customTags
       }
 
       console.log(payload)

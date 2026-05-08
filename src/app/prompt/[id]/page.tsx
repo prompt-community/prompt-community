@@ -19,6 +19,8 @@ interface PromptData {
   description: string; // 确保包含 description
   likes_count: number;
   profiles?: { username: string };
+  tags?: string[];
+  custom_tags?: string[];
 }
 
 interface PromptVersion {
@@ -43,11 +45,39 @@ export default function PromptDetailPage() {
   const [isAuthor, setIsAuthor] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   
-  // --- 新增：元数据编辑状态 (标题/简介) ---
+  // --- 新增：元数据编辑状态 (标题/简介/标签) ---
   const [isEditingMeta, setIsEditingMeta] = useState(false)
   const [editTitle, setEditTitle] = useState('')
   const [editDescription, setEditDescription] = useState('')
+  const [editSelectedTags, setEditSelectedTags] = useState<string[]>([])
+  const [editCustomTagInput, setEditCustomTagInput] = useState('')
   const [savingMeta, setSavingMeta] = useState(false)
+
+  const PRESET_TAGS = ['开发', '学术', '写作', '设计', '效率', '娱乐']
+
+  const handleAddTag = (tag: string) => {
+    const trimmed = tag.trim()
+    if (!trimmed) return
+    if (editSelectedTags.length >= 5) {
+      toast.error('最多只能添加 5 个标签')
+      return
+    }
+    if (trimmed.length > 15) {
+      toast.error('单个标签最多 15 个字符')
+      return
+    }
+    if (editSelectedTags.includes(trimmed)) {
+      setEditCustomTagInput('')
+      return
+    }
+
+    setEditSelectedTags([...editSelectedTags, trimmed])
+    setEditCustomTagInput('')
+  }
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setEditSelectedTags(editSelectedTags.filter(t => t !== tagToRemove))
+  }
 
   // --- 版本内容编辑状态 ---
   const [isEditing, setIsEditing] = useState(false)
@@ -126,6 +156,7 @@ export default function PromptDetailPage() {
       // 初始化编辑表单的数据
       setEditTitle(promptData.title)
       setEditDescription(promptData.description || '')
+      setEditSelectedTags([...(promptData.tags || []), ...(promptData.custom_tags || [])])
       
       if (user && promptData.author_id === user.id) {
         setIsAuthor(true)
@@ -162,15 +193,29 @@ export default function PromptDetailPage() {
     if (!editTitle.trim()) return toast.error("标题不能为空")
     setSavingMeta(true)
     try {
+      const presetTags = editSelectedTags.filter(tag => PRESET_TAGS.includes(tag))
+      const customTags = editSelectedTags.filter(tag => !PRESET_TAGS.includes(tag))
+
       const { error } = await supabase
         .from('prompts')
-        .update({ title: editTitle, description: editDescription })
+        .update({ 
+          title: editTitle, 
+          description: editDescription,
+          tags: presetTags,
+          custom_tags: customTags
+        })
         .eq('id', id)
         
       if (error) throw error
       
       // 乐观更新本地状态
-      setPrompt(prev => prev ? { ...prev, title: editTitle, description: editDescription } : null)
+      setPrompt(prev => prev ? { 
+        ...prev, 
+        title: editTitle, 
+        description: editDescription,
+        tags: presetTags,
+        custom_tags: customTags
+      } : null)
       setIsEditingMeta(false)
       toast.success("基础信息修改成功！")
     } catch (err: unknown) {
@@ -271,6 +316,61 @@ export default function PromptDetailPage() {
               rows={3}
               placeholder="添加一段牛逼的简介吧..."
             />
+            {/* 标签编辑区 */}
+            <div>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {PRESET_TAGS.map(tag => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => handleAddTag(tag)}
+                    disabled={editSelectedTags.includes(tag) || editSelectedTags.length >= 5}
+                    className="px-3 py-1.5 text-sm rounded-full border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition font-medium"
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={editCustomTagInput}
+                  onChange={(e) => setEditCustomTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleAddTag(editCustomTagInput)
+                    }
+                  }}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"
+                  placeholder="输入自定义标签，按回车或点击添加"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleAddTag(editCustomTagInput)}
+                  className="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition text-sm border border-gray-200 shadow-sm"
+                >
+                  添加
+                </button>
+              </div>
+              {editSelectedTags.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-3 bg-blue-50/40 border border-blue-100 rounded-lg">
+                  {editSelectedTags.map(tag => (
+                    <span key={tag} className="flex items-center bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold shadow-sm">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTag(tag)}
+                        className="ml-2 text-blue-500 hover:text-blue-800 focus:outline-none w-4 h-4 flex items-center justify-center rounded-full hover:bg-blue-200 transition-colors"
+                        title="移除标签"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex gap-3 pt-2">
               <button onClick={handleMetaUpdate} disabled={savingMeta} className="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">
                 {savingMeta ? '保存中...' : '确认修改'}
@@ -304,6 +404,21 @@ export default function PromptDetailPage() {
                     {prompt.description}
                   </p>
                 )}
+                
+                {/* 标签展示区 */}
+                {(() => {
+                  const allTags = [...(prompt.tags || []), ...(prompt.custom_tags || [])];
+                  if (allTags.length === 0) return null;
+                  return (
+                    <div className="flex gap-2 flex-wrap mt-3">
+                      {allTags.map((tag: string) => (
+                        <span key={tag} className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100 shadow-sm">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
 
               {/* 操作按钮组 (作者或管理员可见) */}
