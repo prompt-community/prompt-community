@@ -204,34 +204,34 @@ export default function ProfileIdPage() {
           {/* Profile Content */}
           <div className="px-8 pb-10 relative">
             {/* Avatar Section */}
-            <div className="flex justify-between items-end -mt-20 mb-6 relative z-10">
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-2xl p-1 bg-white shadow-lg relative">
+            <div className="flex justify-between items-end -mt-16 sm:-mt-20 mb-6 relative z-10 gap-2">
+              <div className="relative group shrink-0">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl p-1 bg-white shadow-lg relative">
                   <img
                     src={profile.avatar_url || defaultAvatar}
                     alt="Avatar"
                     className="w-full h-full rounded-xl object-cover bg-gray-100"
                   />
                 </div>
-                <div className={`absolute -bottom-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-black shadow-md whitespace-nowrap border border-white/80 backdrop-blur-sm transition-transform group-hover:scale-105 ${levelInfo.badge}`}>
+                <div className={`absolute -bottom-3 sm:-bottom-4 left-1/2 -translate-x-1/2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-black shadow-md whitespace-nowrap border border-white/80 backdrop-blur-sm transition-transform group-hover:scale-105 ${levelInfo.badge}`}>
                   Lv. {levelInfo.level} {levelInfo.name}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3 shrink-0">
                 {isOwner && (
                   <a
                     href="https://auth.wsw.wiki/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-6 py-2.5 border-2 border-gray-900 text-gray-900 text-sm font-bold rounded-xl shadow-md hover:bg-gray-900 hover:text-white hover:shadow-lg transition-all active:scale-95"
+                    className="px-4 sm:px-6 py-2 sm:py-2.5 border-2 border-gray-900 text-gray-900 text-xs sm:text-sm font-bold rounded-xl shadow-md hover:bg-gray-900 hover:text-white hover:shadow-lg transition-all active:scale-95 whitespace-nowrap text-center"
                   >
                     管理账号
                   </a>
                 )}
                 <button
                   onClick={() => router.push('/')}
-                  className="px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl shadow-md hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95"
+                  className="px-4 sm:px-6 py-2 sm:py-2.5 bg-gray-900 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95 whitespace-nowrap text-center"
                 >
                   返回大厅
                 </button>
