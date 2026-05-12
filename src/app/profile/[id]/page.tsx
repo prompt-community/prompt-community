@@ -275,12 +275,14 @@ export default function ProfileIdPage() {
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
-                      {profile.username || '匿名水分子'}
+                    <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2 sm:gap-3 max-w-full min-w-0">
+                      <span className="truncate max-w-[150px] sm:max-w-[280px] md:max-w-md" title={profile.username || '匿名水分子'}>
+                        {profile.username || '匿名水分子'}
+                      </span>
                       {isOwner && (
                         <button
                           onClick={handleEditClick}
-                          className="text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                          className="text-gray-400 hover:text-blue-500 hover:bg-blue-50 p-1.5 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/20 shrink-0"
                           title="编辑昵称"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -289,7 +291,7 @@ export default function ProfileIdPage() {
                         </button>
                       )}
                       {profile.role === 'admin' && (
-                        <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 rounded-lg flex items-center shadow-sm border border-amber-200 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 rounded-lg flex items-center shadow-sm border border-amber-200 whitespace-nowrap shrink-0">
                           👑 管理员
                         </span>
                       )}
