@@ -52,11 +52,9 @@
 ## 💻 本地开发指南
 
 ### 1. 环境准备
-确保已安装 Node.js 与包管理器 (`pnpm` 推荐)。
+确保已安装 Node.js 与包管理器。
 
-### 2. 克隆与依赖安装
+### 2. 依赖安装
 ```bash
-git clone [https://github.com/yourusername/prompt-community.git](https://github.com/yourusername/prompt-community.git)
-cd prompt-community
 pnpm install
 ```
