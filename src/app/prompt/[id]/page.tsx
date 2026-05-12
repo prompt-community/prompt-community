@@ -11,6 +11,7 @@ import { User } from '@supabase/supabase-js'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
+import ShareImageModal from '@/components/ShareImageModal'
 // import { constrainedMemory } from 'process'
 
 interface PromptData {
@@ -97,6 +98,7 @@ export default function PromptDetailPage() {
   const [isLikeLoading, setIsLikeLoading] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -424,6 +426,14 @@ export default function PromptDetailPage() {
                     </div>
                   )
                 })()}
+
+                {/* 分享按钮 - 所有用户可见 */}
+                <button
+                  onClick={() => setShowShareModal(true)}
+                  className="mt-4 flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium hover:from-blue-100 hover:to-purple-100 hover:shadow-sm transition-all duration-200"
+                >
+                  📤 生成分享图
+                </button>
               </div>
 
               {/* 操作按钮组 (作者或管理员可见) */}
@@ -603,6 +613,14 @@ export default function PromptDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 分享图 Modal */}
+      <ShareImageModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        prompt={prompt}
+        content={versions[selectedIndex]?.content || ''}
+      />
     </main>
   )
 }
