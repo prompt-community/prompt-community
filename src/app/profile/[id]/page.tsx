@@ -48,6 +48,9 @@ export default function ProfileIdPage() {
   const [editBio, setEditBio] = useState('')
   const [isSavingBio, setIsSavingBio] = useState(false)
 
+  // 昵称展开状态（移动端点击查看完整）
+  const [isUsernameExpanded, setIsUsernameExpanded] = useState(false)
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -276,7 +279,11 @@ export default function ProfileIdPage() {
                 ) : (
                   <>
                     <h1 className="text-3xl font-extrabold text-gray-900 flex items-center gap-2 sm:gap-3 max-w-full min-w-0">
-                      <span className="truncate max-w-[150px] sm:max-w-[280px] md:max-w-md" title={profile.username || '匿名水分子'}>
+                      <span 
+                        className={`transition-all duration-300 ${isUsernameExpanded ? 'break-all whitespace-normal' : 'truncate max-w-[150px] sm:max-w-[280px] md:max-w-md'} cursor-pointer`} 
+                        title="点击查看/收起完整昵称"
+                        onClick={() => setIsUsernameExpanded(!isUsernameExpanded)}
+                      >
                         {profile.username || '匿名水分子'}
                       </span>
                       {isOwner && (
