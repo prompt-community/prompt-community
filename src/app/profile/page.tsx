@@ -15,11 +15,11 @@ export default function ProfileRedirectPage() {
         if (user) {
           router.replace(`/profile/${user.id}`)
         } else {
-          window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki/profile"
+          window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://ai.wsw.wiki/profile"
         }
       } catch (error) {
         console.error("Failed to check auth for profile redirect", error)
-        window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki/profile"
+        window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://ai.wsw.wiki/profile"
       }
     }
     checkAuth()

@@ -35,7 +35,7 @@ export default function Navbar() {
   const [loading, setLoading] = useState(true)
 
   // 定义独立域名的认证地址，方便后续统一修改
-  const AUTH_URL = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki"
+  const AUTH_URL = "https://auth.wsw.wiki/login?redirect_to=https://ai.wsw.wiki"
 
   useEffect(() => {
     let mounted = true;
@@ -61,7 +61,7 @@ export default function Navbar() {
     // 2. 监听登录状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (process.env.NODE_ENV === 'development') return
-      
+
       // 忽略 INITIAL_SESSION，避免与上方的 loadProfile 发生并发请求冲突，导致 Auth Token 刷新死锁抛错
       if (event === 'INITIAL_SESSION') return;
 
@@ -117,13 +117,13 @@ export default function Navbar() {
           ) : user ? (
             <div className="flex items-center gap-4">
               {/* 可点击的用户信息胶囊 -> 跳转 Profile */}
-              <Link 
-                href="/profile" 
+              <Link
+                href="/profile"
                 className="flex items-center gap-3 bg-gray-50 hover:bg-blue-50/60 border border-gray-100 hover:border-blue-200 pr-4 pl-1 py-1 rounded-full transition-all duration-300 shadow-sm hover:shadow group cursor-pointer"
               >
-                <img 
-                  src={user.avatar_url || defaultAvatar} 
-                  alt="Avatar" 
+                <img
+                  src={user.avatar_url || defaultAvatar}
+                  alt="Avatar"
                   className="w-9 h-9 rounded-full bg-white border-2 border-white group-hover:scale-105 transition-transform shadow-sm object-cover"
                 />
                 <div className="flex flex-col justify-center">
@@ -138,7 +138,7 @@ export default function Navbar() {
                   </div>
                 </div>
               </Link>
-              
+
               <Link href="/publish" className="bg-gray-900 text-white px-5 py-2.5 rounded-full hover:bg-black transition font-bold text-sm shadow hover:shadow-md active:scale-95">
                 + 发布 Prompt
               </Link>
@@ -186,14 +186,14 @@ export default function Navbar() {
           {user ? (
             <>
               {/* 移动端用户信息大卡片 -> 跳转 Profile */}
-              <Link 
-                href="/profile" 
+              <Link
+                href="/profile"
                 onClick={() => setIsOpen(false)}
                 className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 hover:bg-blue-50 transition active:scale-[0.98] shadow-sm"
               >
-                <img 
-                  src={user.avatar_url || defaultAvatar} 
-                  alt="Avatar" 
+                <img
+                  src={user.avatar_url || defaultAvatar}
+                  alt="Avatar"
                   className="w-14 h-14 rounded-full bg-white border-2 border-white shadow-sm object-cover"
                 />
                 <div className="flex-1">
@@ -211,7 +211,7 @@ export default function Navbar() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </div>
               </Link>
-              
+
               <Link
                 href="/publish"
                 onClick={() => setIsOpen(false)}

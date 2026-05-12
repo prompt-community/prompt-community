@@ -51,7 +51,7 @@ export default function PublishPage() {
       const user = await authService.getCurrentUser()
       if (!user) {
         // 如果没登录，直接踢回登录页
-        window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://prompt.wsw.wiki/publish"
+        window.location.href = "https://auth.wsw.wiki/login?redirect_to=https://ai.wsw.wiki/publish"
       } else {
         setUserId(user.id)
       }
@@ -77,7 +77,7 @@ export default function PublishPage() {
       if (selectedTags.length > 0) {
         const presetTags = selectedTags.filter(tag => PRESET_TAGS.includes(tag))
         const customTags = selectedTags.filter(tag => !PRESET_TAGS.includes(tag))
-        
+
         if (presetTags.length > 0) payload.tags = presetTags
         if (customTags.length > 0) payload.custom_tags = customTags
       }
