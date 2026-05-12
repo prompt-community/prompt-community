@@ -218,12 +218,24 @@ export default function ProfileIdPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => router.push('/')}
-                className="px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl shadow-md hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95"
-              >
-                返回大厅
-              </button>
+              <div className="flex items-center gap-3">
+                {isOwner && (
+                  <a
+                    href="https://auth.wsw.wiki/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-2.5 border-2 border-gray-900 text-gray-900 text-sm font-bold rounded-xl shadow-md hover:bg-gray-900 hover:text-white hover:shadow-lg transition-all active:scale-95"
+                  >
+                    管理账号
+                  </a>
+                )}
+                <button
+                  onClick={() => router.push('/')}
+                  className="px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-xl shadow-md hover:bg-gray-800 hover:shadow-lg transition-all active:scale-95"
+                >
+                  返回大厅
+                </button>
+              </div>
             </div>
 
             {/* User Info */}
