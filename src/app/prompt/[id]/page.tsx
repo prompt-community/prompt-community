@@ -301,6 +301,16 @@ export default function PromptDetailPage() {
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
       <div className="max-w-4xl mx-auto px-4">
 
+        {/* 新增：左上角返回按钮 */}
+        <div className="mb-6">
+          <button 
+            onClick={() => router.push('/')} // 使用 router.push('/') 显式返回 index 页面
+            className="flex items-center text-gray-500 hover:text-gray-900 transition-colors duration-200 text-sm font-medium"
+          >
+            返回大厅
+          </button>
+        </div>
+        
         {/* 新增：元数据编辑模式 */}
         {isEditingMeta ? (
           <div className="bg-white p-8 rounded-xl shadow-md border-2 border-gray-200 mb-6 space-y-4">
