@@ -22,7 +22,7 @@ const LEVEL_THRESHOLDS = [
   { level: 2, name: '纯净水', min: 10, max: 49, badge: 'bg-cyan-100 text-cyan-800' },
   { level: 3, name: '矿泉水', min: 50, max: 199, badge: 'bg-emerald-100 text-emerald-800' },
   { level: 4, name: '蒸馏水', min: 200, max: 499, badge: 'bg-purple-100 text-purple-800' },
-  { level: 5, name: '重水', min: 500, max: Infinity, badge: 'bg-rose-100 text-rose-800' },
+  { level: 5, name: '五水', min: 500, max: Infinity, badge: 'bg-rose-100 text-rose-800' },
 ]
 
 function getLevelInfo(points: number) {
