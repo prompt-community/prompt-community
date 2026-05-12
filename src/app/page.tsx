@@ -70,7 +70,7 @@ export default async function Home({
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-gray-800 mb-3">停下脚步，接一杯灵感</h2>
-          <p className="text-gray-500 mb-6">探索由中科大同学们分享的优质提示词。在这里交流代码与学术 Prompt ，激发你的下一次沸点。</p>
+          <p className="text-gray-500 mb-6">接一杯开源 AI 提示词，让灵感在此沸腾！</p>
           <TagFilter selectedTags={selectedTags} mode={mode} presetOnly={presetOnly} />
         </div>
 
