@@ -289,7 +289,7 @@ export default function ProfileIdPage() {
                         </button>
                       )}
                       {profile.role === 'admin' && (
-                        <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 rounded-lg flex items-center shadow-sm border border-amber-200">
+                        <span className="px-2 py-1 text-xs font-bold bg-gradient-to-r from-amber-200 to-amber-100 text-amber-800 rounded-lg flex items-center shadow-sm border border-amber-200 whitespace-nowrap">
                           👑 管理员
                         </span>
                       )}
