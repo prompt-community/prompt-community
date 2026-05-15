@@ -1,8 +1,8 @@
-// src/middleware.ts
+// src/proxy.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // 🚧 极客后门：本地开发环境直接放行，不走任何 Cookie 校验与拦截
   if (process.env.NODE_ENV === 'development') {
     return NextResponse.next()
