@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import * as Diff from 'diff'
 import { authService } from '@/lib/authService'
-import { toast } from 'react-hot-toast'
+import toast, { Toaster } from 'react-hot-toast'
 import { User } from '@supabase/supabase-js'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -299,6 +299,7 @@ export default function PromptDetailPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 py-12 font-sans">
+      <Toaster position="bottom-right" />
       <div className="max-w-4xl mx-auto px-4">
 
         {/* 新增：左上角返回按钮 */}
