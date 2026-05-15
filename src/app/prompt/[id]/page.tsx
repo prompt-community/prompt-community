@@ -626,12 +626,14 @@ export default function PromptDetailPage() {
       )}
 
       {/* 分享图 Modal */}
-      <ShareImageModal
-        isOpen={showShareModal}
-        onClose={() => setShowShareModal(false)}
-        prompt={prompt}
-        content={versions[selectedIndex]?.content || ''}
-      />
+      {showShareModal && (
+        <ShareImageModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          prompt={prompt}
+          content={versions[selectedIndex]?.content || ''}
+        />
+      )}
     </main>
   )
 }

@@ -6,6 +6,14 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { authService } from '@/lib/authService'
 
+type PromptInsertPayload = {
+  title: string
+  description: string
+  author_id: string
+  tags?: string[]
+  custom_tags?: string[]
+}
+
 export default function PublishPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
@@ -68,7 +76,7 @@ export default function PublishPage() {
 
     try {
       // 1. 插入 prompts 主表
-      const payload: any = {
+      const payload: PromptInsertPayload = {
         title,
         description,
         author_id: userId
@@ -81,8 +89,6 @@ export default function PublishPage() {
         if (presetTags.length > 0) payload.tags = presetTags
         if (customTags.length > 0) payload.custom_tags = customTags
       }
-
-      console.log(payload)
 
       const { data: promptData, error: promptError } = await supabase
         .from('prompts')

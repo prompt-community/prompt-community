@@ -4,7 +4,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { authService } from '@/lib/authService'
-import { supabase } from '@/lib/supabase'
 import { generateInitialAvatar } from '@/lib/avatar'
 
 interface UserProfile {
@@ -59,7 +58,7 @@ export default function Navbar() {
     loadProfile()
 
     // 2. 监听登录状态变化
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = authService.onAuthStateChange(async (event, session) => {
       if (process.env.NODE_ENV === 'development') return
 
       // 忽略 INITIAL_SESSION，避免与上方的 loadProfile 发生并发请求冲突，导致 Auth Token 刷新死锁抛错

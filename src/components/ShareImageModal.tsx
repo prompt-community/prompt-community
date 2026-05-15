@@ -51,8 +51,6 @@ export default function ShareImageModal({ isOpen, onClose, prompt, content }: Sh
 
   useEffect(() => {
     if (isOpen) {
-      setImageUrl(null)
-      setCopySuccess(false)
       // 延迟执行以确保 DOM 已渲染
       const timer = setTimeout(() => {
         generateImage()

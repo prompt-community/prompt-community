@@ -2,6 +2,8 @@
 import { supabase } from './supabase'
 import {type User} from '@supabase/supabase-js'
 
+type AuthStateChangeCallback = Parameters<typeof supabase.auth.onAuthStateChange>[0]
+
 export const authService = {
   
 
@@ -37,6 +39,11 @@ export const authService = {
 
     const { data: { user } } = await supabase.auth.getUser()
     return user
+  },
+
+  // 2.1 监听登录状态变化，避免组件直接依赖具体用户系统 SDK
+  onAuthStateChange(callback: AuthStateChangeCallback) {
+    return supabase.auth.onAuthStateChange(callback)
   },
 
   // 3. 获取role(string)

@@ -1,7 +1,6 @@
-// nextjs-main-site/src/middleware.ts
+// src/middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { authService } from '@/lib/authService'
 
 export async function middleware(request: NextRequest) {
   // 🚧 极客后门：本地开发环境直接放行，不走任何 Cookie 校验与拦截
@@ -25,12 +24,16 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value }) => {
             // 更新 Request 内部的 Cookie 状态
             request.cookies.set(name, value)
-            supabaseResponse = NextResponse.next({
-              request,
-            })
+          })
+
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+
+          cookiesToSet.forEach(({ name, value, options }) => {
             // 核心魔法：如果 Token 过期自动刷新了，回写的新 Cookie 也必须是跨域的！
             supabaseResponse.cookies.set(name, value, {
               ...options,
@@ -43,8 +46,7 @@ export async function middleware(request: NextRequest) {
   )
 
   // 这一步非常关键：调用 getUser() 不仅为了验证身份，更是触发潜在 Token 刷新的引擎
-  // await supabase.auth.getUser()
-  await authService.getCurrentUser() // 通过 AuthService 的 getCurrentUser 来触发 Token 刷新逻辑
+  await supabase.auth.getUser()
 
   return supabaseResponse
 }

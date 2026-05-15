@@ -124,7 +124,7 @@ export default function ProfileIdPage() {
       toast.success('昵称修改成功！')
       setIsEditing(false)
       window.dispatchEvent(new Event('profileUpdated'))
-    } catch (error) {
+    } catch {
       toast.error('修改失败，可能是网络错误')
     } finally {
       setIsSaving(false)
@@ -155,7 +155,7 @@ export default function ProfileIdPage() {
       setProfile({ ...profile, bio: trimmed })
       toast.success('个性签名修改成功！')
       setIsEditingBio(false)
-    } catch (error) {
+    } catch {
       toast.error('修改签名失败，可能是网络错误')
     } finally {
       setIsSavingBio(false)
