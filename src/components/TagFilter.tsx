@@ -1,76 +1,88 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition, useEffect } from 'react'
+import { useOptimistic, useTransition } from 'react'
 
 const PRESET_TAGS = ['开发', '学术', '写作', '设计', '效率', '娱乐']
+
+type MatchMode = 'and' | 'or'
+
+interface FilterState {
+  selectedTags: string[]
+  mode: MatchMode
+  showPresets: boolean
+}
 
 export default function TagFilter({
   selectedTags = [],
   mode = 'or',
-  presetOnly = false
+  showPresets = true
 }: {
   selectedTags: string[]
-  mode: 'and' | 'or'
-  presetOnly?: boolean
+  mode: MatchMode
+  showPresets?: boolean
 }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  // 乐观更新的状态
-  const [optimisticTags, setOptimisticTags] = useState(selectedTags)
-  const [optimisticMode, setOptimisticMode] = useState(mode)
-  const [optimisticPresetOnly, setOptimisticPresetOnly] = useState(presetOnly)
+  const currentFilter = {
+    selectedTags,
+    mode,
+    showPresets
+  }
 
-  // 当服务端响应完成（props改变）时，同步最新状态
-  useEffect(() => {
-    setOptimisticTags(selectedTags)
-    setOptimisticMode(mode)
-    setOptimisticPresetOnly(presetOnly)
-  }, [selectedTags, mode, presetOnly])
+  const [optimisticFilter, setOptimisticFilter] = useOptimistic(
+    currentFilter,
+    (_currentFilter: FilterState, nextFilter: FilterState) => nextFilter
+  )
 
   const toggleTag = (tag: string) => {
-    let newTags = [...optimisticTags]
+    let newTags = [...optimisticFilter.selectedTags]
     if (newTags.includes(tag)) {
       newTags = newTags.filter(t => t !== tag)
     } else {
       newTags.push(tag)
     }
 
-    // 立即更新 UI，不等待网络
-    setOptimisticTags(newTags)
-    updateURL(newTags, optimisticMode, optimisticPresetOnly)
+    navigateWithFilter({
+      ...optimisticFilter,
+      selectedTags: newTags
+    })
   }
 
   const toggleMode = () => {
-    const newMode = optimisticMode === 'or' ? 'and' : 'or'
+    const newMode = optimisticFilter.mode === 'or' ? 'and' : 'or'
 
-    // 立即更新 UI
-    setOptimisticMode(newMode)
-    updateURL(optimisticTags, newMode, optimisticPresetOnly)
+    navigateWithFilter({
+      ...optimisticFilter,
+      mode: newMode
+    })
   }
 
-  const togglePresetOnly = () => {
-    const newPresetOnly = !optimisticPresetOnly
-    setOptimisticPresetOnly(newPresetOnly)
-    updateURL(optimisticTags, optimisticMode, newPresetOnly)
+  const toggleShowPresets = () => {
+    navigateWithFilter({
+      ...optimisticFilter,
+      showPresets: !optimisticFilter.showPresets
+    })
   }
 
-  const updateURL = (tags: string[], newMode: 'and' | 'or', newPresetOnly: boolean) => {
+  const navigateWithFilter = (nextFilter: FilterState) => {
     const params = new URLSearchParams()
-    if (tags.length > 0) {
-      params.set('tags', tags.join(','))
+    if (nextFilter.selectedTags.length > 0) {
+      params.set('tags', nextFilter.selectedTags.join(','))
     }
-    if (newMode !== 'or') {
-      params.set('mode', newMode)
+    if (nextFilter.mode !== 'or') {
+      params.set('mode', nextFilter.mode)
     }
-    if (newPresetOnly) {
-      params.set('presetOnly', 'true')
+    if (!nextFilter.showPresets) {
+      params.set('showPresets', 'false')
     }
 
     // 使用 startTransition 触发低优先级的导航，这会点亮 isPending
     startTransition(() => {
-      router.push(`/?${params.toString()}`)
+      setOptimisticFilter(nextFilter)
+      const queryString = params.toString()
+      router.push(queryString ? `/?${queryString}` : '/')
     })
   }
 
@@ -80,7 +92,7 @@ export default function TagFilter({
         <div className="flex flex-wrap gap-2 items-center">
           <span className="text-sm font-semibold text-gray-500 mr-2">过滤标签:</span>
           {PRESET_TAGS.map(tag => {
-            const isSelected = optimisticTags.includes(tag)
+            const isSelected = optimisticFilter.selectedTags.includes(tag)
             return (
               <button
                 key={tag}
@@ -100,21 +112,21 @@ export default function TagFilter({
           <label className="flex items-center gap-2 cursor-pointer bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 hover:bg-amber-100 transition-colors">
             <input
               type="checkbox"
-              checked={optimisticPresetOnly}
-              onChange={togglePresetOnly}
+              checked={optimisticFilter.showPresets}
+              onChange={toggleShowPresets}
               className="w-4 h-4 text-amber-600 rounded border-amber-300 focus:ring-amber-500"
             />
             <span className="text-sm font-bold">🌟 查看预设 Prompt</span>
           </label>
 
-          {optimisticTags.length > 1 && (
+          {optimisticFilter.selectedTags.length > 1 && (
             <div className="flex items-center space-x-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 transition-all">
               <span className="text-xs font-medium text-gray-500">匹配模式:</span>
               <button
                 onClick={toggleMode}
                 className="flex items-center text-sm font-bold bg-white px-3 py-1 rounded shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
               >
-                {optimisticMode === 'or' ? '任意包含 (OR)' : '全部包含 (AND)'}
+                {optimisticFilter.mode === 'or' ? '任意包含 (OR)' : '全部包含 (AND)'}
                 <svg className="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
               </button>
             </div>
