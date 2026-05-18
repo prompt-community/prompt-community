@@ -91,6 +91,32 @@
   text-decoration: underline;
 }
 
+.announcement-markdown h1 {
+  font-size: 1.375rem;
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.announcement-markdown h2 {
+  font-size: 1.125rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.announcement-markdown h3 {
+  font-size: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.announcement-markdown p:first-child {
+  margin-top: 0;
+}
+
+.announcement-markdown p:last-child {
+  margin-bottom: 0;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

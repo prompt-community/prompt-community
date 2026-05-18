@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import TagFilter from '@/components/TagFilter'
 import AuthorLink from '@/components/AuthorLink'
+import AnnouncementModal from '@/components/AnnouncementModal'
+import { getHomeAnnouncement } from '@/lib/announcements'
 import { getAllPresets } from '@/lib/presets'
 
 // 强制 Next.js 每次请求都动态拉取最新数据（避免静态编译缓存导致看不到新 Prompt）
@@ -224,9 +226,12 @@ export default async function Home({
   const showPresets = getFirstParam(params?.showPresets) !== 'false'
   const presetPrompts = showPresets ? getPresetPrompts(selectedTags, mode) : []
   const databaseKey = `${selectedTags.join(',')}:${mode}`
+  const announcement = await getHomeAnnouncement()
 
   return (
     <main className="min-h-screen bg-gray-50 font-sans">
+      <AnnouncementModal announcement={announcement} />
+
       {/* 社区大厅内容区 */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
